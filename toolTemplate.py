@@ -9,6 +9,8 @@ class toolTemplate(object):
 
     def tool_specs(self, tool_type, env):
 
+        # Loop through all tools and see if they will be ran and when
+
         if (tool_type == 'cesm'):
             specs = self.cesm_specs(env)
 
@@ -53,15 +55,20 @@ class toolTemplate(object):
 
 
     def adjust_date(self, year, month, day):
-    
+   
+        # Make sure we have an actual calendar day and adjust if needed
+ 
         days = {1:31,2:28,3:31,4:30,5:31,6:30,7:31,8:31,9:30,10:31,11:30,12:31}
 
+        # Check and adjust months greater than 12
         if month > 12:
             month = month - 12
             year = year + 1                
+        # Check and adjust days that are greater than the total for that month
         if day > days[month]:
             day = day - days[month]
             month = month + 1
+        # Check again to make sure we didn't just go over the month count
         if month > 12:
             month = month - 12
             year = year + 1
@@ -71,12 +78,15 @@ class toolTemplate(object):
 
     def next_date(self, last_date, n, tper):
   
- 
+        # Find the next day in the CESM cycle
+
+        # Split apart the date to get year, month, and day 
         date_split = last_date.split('-')
         year = int(date_split[0])
         month = int(date_split[1])
         day = int(date_split[2])
 
+        # Adjust the correct portion of the date based on tper
         if 'nday' in tper:
             day = day + int(n)
         elif 'nmonth' in tper:
@@ -91,15 +101,43 @@ class toolTemplate(object):
 
     def find_last(self, env):
 
-        # Last date
+        # Find the last date
+
+        # First get the start date
         last = (env['RUN_STARTDATE'])
+
+        # Since we are using the last date for each CESM simulation, we need to loop 
+        # through resubmit+1
         for i in range(0,int(env['RESUBMIT'])+1):
             last = self.next_date(last,  env['STOP_N'],  env['STOP_OPTION'])
 
-        return last 
+        return last
+
+    def check_djf(self, dyr, dfirst, env):
+
+        # Check to see if we are creating enough data for a djf climatology
+        # This is used for the atm and lnd diags
+
+        # Get the last date that will be simulated
+        last = self.find_last(env)
+ 
+        # If the last year is longer than what we're creating diags for, we're okay
+        if dyr < last:
+            return True
+        # If we need more years than CESM is simulating, we're not okay
+        elif dyr > last:
+            return False
+        # If the diags need the last year simulated, check to see if we creating at least
+        # one year more than needed on the front half.
+        elif dyr == last:
+            first = env['RUN_STARTDATE'].split("-")[0]
+            if first > dfirst:
+                return True
 
     def cesm_specs(self, env):
 
+        # Add all of the last dates for each CESM run.  Set the dependancy based on wether or not sta
+        # will be ran.
         specs = {}
         date_queue = []
         date_queue.append(self.next_date(env['RUN_STARTDATE'],env['STOP_N'],  env['STOP_OPTION']))
@@ -118,6 +156,8 @@ class toolTemplate(object):
 
     def sta_specs(self, env):
 
+        # If the short term archiver will be ran, it will be dependant on CESM and will be invoked
+        # after each CESM run
         specs = {}
         if env['DOUT_S'] == 'TRUE':
             date_queue = []
@@ -137,6 +177,7 @@ class toolTemplate(object):
 
     def lta_specs(self, env):
 
+        # If the long term archiver will be ran, it will be the last item inserted in the dependancy chain
         specs = {}
         if env['DOUT_L_MS'] == 'TRUE':
             date_queue = []
@@ -155,6 +196,7 @@ class toolTemplate(object):
 
     def tseries_specs(self, env):
 
+        # If the tseries will be ran, it will be dependant on the last sta ran
         specs = {}
         if env['GENERATE_TIMESERIES'] == 'TRUE':
             date_queue = []
@@ -173,21 +215,28 @@ class toolTemplate(object):
 
     def  avg_atm_specs(self, env):
 
+        # If the atm averages will be ran, it will depend on either tseries or sta, based on
+        # the tseries variable in the diag_atm file.  It will be inserted based on the last day 
+        # needed for the diags. 
         specs = {}
         if env['GENERATE_AVGS_ATM'] == 'TRUE':
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) + 1 
+            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) - 1
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
-            if env['ATMDIAG_TEST_TIMESERIES'] == 'True':
-                dependancy = 'tseries'
-            else:
-                dependancy = 'sta'
+            if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
+                if env['ATMDIAG_TEST_TIMESERIES'] == 'True':
+                    dependancy = 'tseries'
+                else:
+                    dependancy = 'sta'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
+                specs['date_queue'] = date_queue
+                specs['dependancy'] = dependancy
+            else:
+                specs['date_queue'] = []
+                specs['dependancy'] = ''
         else:
             specs['date_queue'] = []
             specs['dependancy'] = ''
@@ -197,18 +246,23 @@ class toolTemplate(object):
 
     def diag_atm_specs(self, env):
 
+        # If the atm diags will be ran, it will depend on avg_atm. It will be inserted after avg_atm. 
         specs = {}
         if env['GENERATE_DIAGS_ATM'] == 'TRUE' and env['GENERATE_AVGS_ATM'] == 'TRUE':
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) + 1
+            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) - 1
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
-            dependancy = 'avg_atm'
+            if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
+                dependancy = 'avg_atm'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
+                specs['date_queue'] = date_queue
+                specs['dependancy'] = dependancy
+            else:
+                specs['date_queue'] = []
+                specs['dependancy'] = ''
         else:
             specs['date_queue'] = []
             specs['dependancy'] = ''
@@ -218,6 +272,9 @@ class toolTemplate(object):
 
     def avg_ocn_specs(self, env):
 
+        # If the ocn averages will be ran, it will depend on either tseries or sta, based on
+        # the tseries variable in the diag_ocn file.  It will be inserted based on the last day 
+        # needed for the diags. 
         specs = {}
         if env['GENERATE_AVGS_OCN'] == 'TRUE':
             # Get the last year needed
@@ -244,6 +301,7 @@ class toolTemplate(object):
 
     def  diag_ocn_specs(self, env):
 
+        # If the atm diags will be ran, it will depend on avg_ocn. It will be inserted after avg_ocn. 
         specs = {}
         if env['GENERATE_DIAGS_OCN'] == 'TRUE' and env['GENERATE_AVGS_OCN'] == 'TRUE':
             # Get the last year needed 
@@ -268,25 +326,34 @@ class toolTemplate(object):
 
     def avg_lnd_specs(self, env):
 
+        # If the lnd averages will be ran, it will depend on either tseries or sta, based on
+        # the tseries variable in the diag_lnd file.  It will be inserted based on the last day 
+        # needed for the diags. 
         specs = {}
         if env['GENERATE_AVGS_LND'] == 'TRUE':
             # Get the last year needed
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) + 1
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) + 1
+            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) - 1
+            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) - 1
             if climYear > trendYear:
                 year = climYear
+                firstyr = int(env['LNDDIAG_clim_first_yr_1'])
             else:
                 year = trendYear
+                firstyr = int(env['LNDDIAG_trends_first_yr_1'])
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
-            if env['LNDDIAG_CASE1_TIMESERIES'] == 'True':
-                dependancy = 'tseries'
-            else:
-                dependancy = 'sta'
+            if self.check_djf(year, firstyr, env):
+                if env['LNDDIAG_CASE1_TIMESERIES'] == 'True':
+                    dependancy = 'tseries'
+                else:
+                    dependancy = 'sta'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
+                specs['date_queue'] = date_queue
+                specs['dependancy'] = dependancy
+            else:
+                specs['date_queue'] = []
+                specs['dependancy'] = ''
         else:
             specs['date_queue'] = []
             specs['dependancy'] = ''
@@ -297,22 +364,29 @@ class toolTemplate(object):
 
     def  diag_lnd_specs(self, env):
 
+        # If the atm diags will be ran, it will depend on avg_lnd. It will be inserted after avg_lnd. 
         specs = {}
         if env['GENERATE_DIAGS_LND'] == 'TRUE' and env['GENERATE_AVGS_LND'] == 'TRUE':
             # Get the last year needed 
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) + 1
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) + 1
+            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) - 1
+            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) - 1
             if climYear > trendYear:
                 year = climYear
+                firstyr = int(env['LNDDIAG_clim_first_yr_1'])
             else:
                 year = trendYear
+                firstyr = int(env['LNDDIAG_trends_first_yr_1'])
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
-            dependancy = 'avg_lnd'
+            if self.check_djf(year, firstyr, env):
+                dependancy = 'avg_lnd'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
+                specs['date_queue'] = date_queue
+                specs['dependancy'] = dependancy
+            else:
+                specs['date_queue'] = []
+                specs['dependancy'] = ''
         else:
             specs['date_queue'] = []
             specs['dependancy'] = ''
@@ -321,6 +395,9 @@ class toolTemplate(object):
 
     def avg_ice_specs(self, env):
 
+        # If the ice averages will be ran, it will depend on either tseries or sta, based on
+        # the tseries variable in the diag_ice file.  It will be inserted based on the last day 
+        # needed for the diags. 
         specs = {}
         if env['GENERATE_AVGS_ICE'] == 'TRUE':
             year = env['ICEDIAG_ENDYR_DIFF']
@@ -342,6 +419,7 @@ class toolTemplate(object):
 
     def  diag_ice_specs(self, env):
 
+        # If the atm diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
         specs = {}
         if env['GENERATE_DIAGS_ICE'] == 'TRUE' and env['GENERATE_AVGS_ICE'] == 'TRUE':
             year = env['ICEDIAG_ENDYR_DIFF']
@@ -360,6 +438,10 @@ class toolTemplate(object):
 
 def align_dates(control, test, tool):
 
+    # Go through the dates for the tool and CESM and create another list that will
+    # be used to insert the task into the dependency chain at a time that CESM runs.
+    # This list is internal to the system to get correct alignment and is not used for 
+    # anything else.
     test['actual_dates'] = {}
     for d in test['date_queue']:
         if d not in control['date_queue']:

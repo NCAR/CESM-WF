@@ -8,6 +8,8 @@ import cylc_template
 
 def parseArgs(argv = None):
 
+    # Read in arguments
+
     desc = "This tool parses the CESM Env to create to Cylc Workflow.  It then creates the Cylc Suite."
 
     parser = argparse.ArgumentParser(prog='CESM_Cylc_setup',
@@ -24,15 +26,19 @@ def parseArgs(argv = None):
 
 def main(argv=None):
 
+    # Parse Args
     args = parseArgs(argv)
 
+    # Get the current directory (and up one) to find xml files
     caseroot = os.getcwd()+'/../' 
 
+    # List of all CESM XML files (may not be needed in a later version)
     env_file_list = ['env_run.xml', 'env_batch.xml', 'env_case.xml', 'env_mach_pes.xml',
                      'env_build.xml', 'postprocess/env_postprocess.xml', 'postprocess/env_diags_atm.xml', 
                      'postprocess/env_diags_ocn.xml', 'postprocess/env_diags_lnd.xml',
                      'postprocess/env_diags_ice.xml']  
 
+    # Read in the CESM XML env and print out key variables
     env = cesmEnvLib.readXML(caseroot, env_file_list)
     print '\n'
     print 'RESUBMIT: ', env['RESUBMIT']
@@ -74,21 +80,25 @@ def main(argv=None):
     print 'ICEDIAG_DIFF_TIMESERIES: ', env['ICEDIAG_DIFF_TIMESERIES']
     print '\n'
 
+    # These are the names of all tasks that can be ran
     keys = ['cesm', 'sta', 'lta', 'tseries', 'avg_atm', 'diag_atm',
             'avg_ocn', 'diag_ocn', 'avg_lnd', 'diag_lnd', 'avg_ice', 'diag_ice']
 
+    # Figure out what will need to be ran and when they will need to be ran
     template = {}
     for tool in keys:
         template[tool] = toolTemplate.toolTemplate(tool, env)
         print tool,template[tool].specs
 
+    # Align the dates up with a CESM run.  These dates are only used for triggering.
     for tool in keys:
         toolTemplate.align_dates(template['cesm'].specs, template[tool].specs, tool)
 
-
+    # Create the dependency graph between the tasks that will run
     g = graph.create_graph(keys,template)
     cylc_template.create_cylc_input(g, env, 'suite.rc')
 
+    # Create Cylc wf description, setup suite, and validate
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 
 if __name__ == '__main__':
