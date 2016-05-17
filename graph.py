@@ -4,22 +4,26 @@ class Task:
 
     def __init__(self, node, label):
 
+        # Setup a new task (a node)
         self.id = node
         self.actual = label
         self.depends = []
 
     def get_id(self):
 
+        # Return self id
         return self.actual
 
 
     def add_depend(self, task):
 
+        # Add a dependency for this task 
         self.depends.append(task)
 
 
     def get_depends(self):
 
+        # Get the list of this task's dependencies
         return self.depends
 
 
@@ -27,16 +31,19 @@ class Graph:
 
     def __init__(self):
 
+        # Create a new graph structure
         self.tasks = collections.OrderedDict()
         self.task_count = 0        
 
 
     def __iter__(self):
-
+        
+        # Used to iterate through tasks
         return iter(self.tasks.values())
 
     def add_task(self, task, label):
 
+        # Add a new task to the graph
         new_task = Task(task, label)
         self.tasks[task] = Task(task, label)
         self.task_count = self.task_count + 1
@@ -45,6 +52,7 @@ class Graph:
 
     def get_task(self, task_name):
 
+        # Returns a task
         if task_name in self.tasks:
             return self.tasks[task_name]
         else:
@@ -53,29 +61,36 @@ class Graph:
 
     def add_depend(self, frm, depend, flabel, dlabel):
 
-        #print frm,'->',flabel
-        #print depend,'->',dlabel
+        # Add a dependency and a new tasks if they don't exist
         if frm not in self.tasks:
             self.add_task(frm, flabel)
         if depend not in self.tasks:
             self.add_task(depend, dlabel)
-        #self.tasks[frm].add_depend(depend)
         self.tasks[frm].add_depend(dlabel)
 
     def get_depends():
         
+        # Get all tasks in the graph
         return self.tasks.keys()
 
 
 
 def create_graph(keys, tasks):
-    
+   
+    # Create a graph structure that represents the dependancies within
+    # this CESM experiment.   
+ 
     g = Graph()
     all_dates = tasks['cesm'].specs['date_queue']
 
+    # We need to take cesm out of the tool chain because we know we
+    # will need to insert it on every date and we don't want to insert
+    # it twice. 
     i = keys.index('cesm')
     keys.pop(i)
     first = True
+
+    # Loop through all CESM end dates to fill in dependancy graph
     for i in range(0,len(all_dates)):
         date = all_dates[i]
         # Add cesm job
@@ -121,7 +136,5 @@ def create_graph(keys, tasks):
                     d = d + t.depends[i]
                     if i < len(t.depends)-1:
                         d = d + ' & '
-                #print d     
 
     return g           
-            #print t.get_id(),'->',t.depends

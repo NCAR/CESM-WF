@@ -1,4 +1,5 @@
 
+# The run commands to run each of the tasks
 commands = {'cesm': 'case.run', 'sta': 'case.st_archive', 'lta': 'case.lt_archive',
             'tseries': 'postprocess/timeseries', 'avg_atm': 'atm_averages', 'diag_atm': 'atm_diagnostics',
             'avg_ocn': 'ocn_averages', 'diag_ocn': 'ocn_diagnostics', 
