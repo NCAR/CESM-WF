@@ -37,7 +37,7 @@ class Graph:
 
 
     def __iter__(self):
-        
+
         # Used to iterate through tasks
         return iter(self.tasks.values())
 
@@ -78,15 +78,14 @@ class Graph:
 def create_graph(keys, tasks):
    
     # Create a graph structure that represents the dependancies within
-    # this CESM experiment.   
- 
+    # this CESM experiment. 
     g = Graph()
-    all_dates = tasks['cesm'].specs['date_queue']
+    all_dates = tasks['case_run'].specs['date_queue']
 
     # We need to take cesm out of the tool chain because we know we
     # will need to insert it on every date and we don't want to insert
-    # it twice. 
-    i = keys.index('cesm')
+    # it twice.
+    i = keys.index('case_run')
     keys.pop(i)
     first = True
 
@@ -95,11 +94,11 @@ def create_graph(keys, tasks):
         date = all_dates[i]
         # Add cesm job
         if first:
-            g.add_task('cesm_'+date, 'cesm_'+date)
+            g.add_task('case_run_'+date, 'case_run_'+date)
             first = False
         else:
-            g.add_depend(tasks['cesm'].specs['dependancy']+'_'+all_dates[i-1], 'cesm_'+date, 
-                         tasks['cesm'].specs['dependancy']+'_'+all_dates[i-1], 'cesm_'+date)
+            g.add_depend(tasks['case_run'].specs['dependancy']+'_'+all_dates[i-1], 'case_run_'+date, 
+                         tasks['case_run'].specs['dependancy']+'_'+all_dates[i-1], 'case_run_'+date)
         # Find out who has this date
         run_now = []
         for tool in keys:
@@ -136,5 +135,6 @@ def create_graph(keys, tasks):
                     d = d + t.depends[i]
                     if i < len(t.depends)-1:
                         d = d + ' & '
-
+                #print d     
     return g           
+            #print t.get_id(),'->',t.depends
