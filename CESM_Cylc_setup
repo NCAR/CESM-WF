@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 
 import cesmEnvLib
-import argparse, os, stat
+import argparse, os, stat, sys
 import toolTemplate
 import graph
 import cylc_template
-import env_cylc
 import getpass
 
 def parseArgs(argv = None):
@@ -14,6 +13,8 @@ def parseArgs(argv = None):
 
     parser = argparse.ArgumentParser(prog='CESM_Cylc_setup',
                                      description=desc)
+    parser.add_argument('-c','--cime',default=None, type=str,
+                        help='Path to CIME root.', required=True)
     parser.add_argument('-p','--path',default=None, type=str,
                         help='Path to output Cylc Suite.  It will be create if it does not exist.', required=True)
     parser.add_argument('-s','--suite',default=None, type=str,
@@ -30,6 +31,8 @@ def create_new_run_script():
     f_new = open('../case.run.cylc','w')
     f_old = open('../case.run','r')
     for line in f_old:
+        if 'caseroot = parse_command_line' in line:
+            f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
         f_new.write(line)
         if 'success = case_run(case)' in line:
             f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
@@ -41,6 +44,11 @@ def create_new_run_script():
 def main(argv=None):
 
     args = parseArgs(argv)
+
+    _LIBDIR = os.path.join(args.cime,"scripts", "Tools")
+    sys.path.append(_LIBDIR)
+
+    import env_cylc
 
     env = env_cylc.get_env()
 

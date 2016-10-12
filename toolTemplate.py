@@ -283,9 +283,9 @@ class toolTemplate(object):
         if 'TRUE' in env['GENERATE_AVGS_OCN'] :
             # Get the last year needed
             if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']): 
-                year = int(env['OCNDIAG_YEAR1']) + 1
+                year = int(env['OCNDIAG_YEAR1']) 
             else:
-                year = int(env['OCNDIAG_TSERIES_YEAR1']) + 1
+                year = int(env['OCNDIAG_TSERIES_YEAR1']) 
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
@@ -310,9 +310,9 @@ class toolTemplate(object):
         if 'TRUE' in env['GENERATE_DIAGS_OCN']  and 'TRUE' in env['GENERATE_AVGS_OCN'] :
             # Get the last year needed 
             if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']):
-                year = int(env['OCNDIAG_YEAR1']) + 1
+                year = int(env['OCNDIAG_YEAR1']) 
             else:
-                year = int(env['OCNDIAG_TSERIES_YEAR1']) + 1
+                year = int(env['OCNDIAG_TSERIES_YEAR1']) 
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
@@ -404,7 +404,7 @@ class toolTemplate(object):
         # needed for the diags.
         specs = {}
         if 'TRUE' in env['GENERATE_AVGS_ICE'] :
-            year = int(env['ICEDIAG_ENDYR_DIFF']) + 1
+            year = int(env['ICEDIAG_ENDYR_DIFF']) 
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
@@ -426,7 +426,7 @@ class toolTemplate(object):
         # If the atm diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
         specs = {}
         if 'TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] :
-            year = int(env['ICEDIAG_ENDYR_DIFF']) + 1
+            year = int(env['ICEDIAG_ENDYR_DIFF'])
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
