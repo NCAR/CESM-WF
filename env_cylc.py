@@ -1,9 +1,4 @@
-import os, sys, math, subprocess
-        
-machine_name = 'yellowstone'
-        
-_LIBDIR = os.path.join("/glade/scratch/mickelso/cylc_test/cesm2_0_alpha01a/cime", "scripts", "Tools")
-sys.path.append(_LIBDIR)
+import os, sys, math, subprocess, glob
         
 import cesmEnvLib
 from standard_script_setup          import *
@@ -14,12 +9,52 @@ from CIME.task_maker import TaskMaker
 from CIME.XML.batch                 import Batch
 from CIME.XML.env_run               import EnvRun
 from CIME.XML.env_case              import EnvCase
-        
+from CIME.XML.env_build             import EnvBuild        
         
 class EnvCylc():
         
     def __init__(self):
         self.env = {}    
+
+    def get_date(self, runDir, doutDir):
+
+        dates = {}
+        rpointers = glob.glob(str(runDir)+'/rpointer.*')
+        if len(rpointers) < 1:
+            print 'Could not find any rpointer files in: ',runDir
+            print 'You need to have rpointer files and the corresponding restart files if you have CONTINUE_RUN set to TRUE.'
+            sys.exit(1)
+        for rp in rpointers:
+            f = open(rp,'r')
+            for line in f:
+                if '.nc' in line:
+                    dates[rp] = {}
+                    if './' in line:
+                        dates[rp]['fn'] = (str(runDir)+'/'+line[2:]).strip()
+                    else:
+                        dates[rp]['fn'] = (str(runDir)+'/'+line).strip()
+                    dates[rp]['date'] = line.split('.')[-2][:-6]
+            f.close()
+
+        sd = 'null'
+        for d,v in dates.iteritems():
+            if not os.path.isfile(v['fn']):
+                print 'Restart file does not exist: ',v['fn']
+                print 'This was pointed to by: ',d
+                print 'Check rpointer files for errors.'
+                sys.exit(1) 
+
+            if sd == 'null':
+                sd = v['date']
+            else:
+                if sd != v['date']:
+                    print 'Check rpointer files, detected an inconsistency.'
+                    print 'No Cylc workflow will be created.'
+                    sys.exit(1)
+
+
+        return sd
+
 
     def get_env(self):
         my_case = os.getcwd() + '/../'
@@ -28,11 +63,16 @@ class EnvCylc():
         
         cwd = os.getcwd()
         os.chdir(my_case)
+
+        env_case = EnvCase()
+        machine_name = env_case.get_value('MACH')
+        print 'Running on ',machine_name
+
         env_mach = Machines(machine=machine_name)
         batch_system = env_mach.get_value("BATCH_SYSTEM")
         batch = Batch(batch_system=batch_system, machine=machine_name)
         env_run = EnvRun()
-        env_case = EnvCase()
+        env_build = EnvBuild() 
         env_batch = case.get_env("batch")
         os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
@@ -47,16 +87,16 @@ class EnvCylc():
          
         bjobs = batch.get_batch_jobs()
         for job, jsect in bjobs:
-            job = job.replace('.','_')
-            directives[job] = []
+            job_ = str.replace(job,'.','_')
+            directives[job_] = []
             task_count = jsect["task_count"]
             if task_count is None or task_count == "default":
                 task_count = str(task_maker.totaltasks)
             else:
                 task_count = int(task_count)
-            queue = env_batch.select_best_queue(task_count)
+            queue = env_batch.select_best_queue(task_count,job)
             if queue is None:
-                queue = env_batch.select_best_queue(task_maker.totaltasks)
+                queue = env_batch.select_best_queue(task_maker.totaltasks,job)
             wall_time = env_batch.get_max_walltime(queue)
             if wall_time is None:
                 wall_time = env_batch.get_default_walltime()
@@ -70,7 +110,7 @@ class EnvCylc():
             dss = ds.split('\n') 
             for d in dss:  
                 direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
- 
+
             s = env_batch.get_submit_args(case, job)
             bd = env_batch.get_node("batch_directive").text
             direct = direct.replace(bd,'')
@@ -84,19 +124,39 @@ class EnvCylc():
                 d=' '.join(d).split()
                 if len(d) == 2:
                     if ' ' not in d[0] and ' ' not in d[1]:
-                        directives[job].append(d[0]+' = '+d[1])
-        
+                        directives[job_].append(d[0]+' = '+d[1])
+
         self.env['directives'] = directives
         self.env['STOP_N'] = env_run.get_value("STOP_N")
         self.env['RESUBMIT'] = env_run.get_value("RESUBMIT")
-        self.env['RUN_STARTDATE'] = env_run.get_value('RUN_STARTDATE')
         self.env['STOP_OPTION'] = env_run.get_value('STOP_OPTION')
         self.env['DOUT_S'] = env_run.get_value('DOUT_S')
         self.env['DOUT_L_MS'] = env_run.get_value('DOUT_L_MS')
         self.env['CASEROOT'] = env_case.get_value('CASEROOT')
         self.env['CASE'] = env_case.get_value('CASE')
-        
-        
+        self.env['RUNDIR'] = env_run.get_value('RUNDIR')        
+        self.env['CESMSCRATCHROOT'] = env_build.get_value('CESMSCRATCHROOT')
+        self.env['USER'] = env_case.get_value('USER')
+        # Resolve RUNDIR
+        while '$' in str(self.env['RUNDIR']):
+            split = str(self.env['RUNDIR']).split('/')
+            for v in split:
+                if '$' in v:
+                    self.env['RUNDIR'] = str.replace(self.env['RUNDIR'],v,self.env[v[1:]])
+        cont_run = env_run.get_value('CONTINUE_RUN')
+        if not cont_run:
+            start = env_run.get_value('RUN_STARTDATE')
+        else:
+            start = self.get_date(self.env['RUNDIR'],self.env['DOUT_S'])
+        valid = False
+        while not valid:
+            choice = str(raw_input("Use start date "+start+"? y/n \n"))
+            if choice == 'Y' or choice == 'y':
+                valid = True
+                self.env['RUN_STARTDATE'] = start
+            elif choice == 'N' or choice == 'n':
+                valid = True
+                user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
         env_run.set_value("RUN_WITH_SUBMIT", True)
        
         pp_dir = my_case+'/postprocess/'
