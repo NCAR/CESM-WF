@@ -55,6 +55,68 @@ class EnvCylc():
 
         return sd
 
+    def get_tseries_info(self,pp_dir,stop_n, stop_option):
+
+        import xml.etree.ElementTree as ET
+
+        xml_tree = ET.ElementTree()
+        tpers = ['hour', 'day', 'month', 'year']
+        sizes = [1, 24, 720, 8760]  
+        i_tper = len(tpers)-1
+        i_size = 999
+        s_size = i_size * 365 * 24
+        xml_tree.parse(pp_dir+'/env_timeseries.xml')
+        for comp_archive_spec in xml_tree.findall("components/comp_archive_spec"):        
+ 
+            for file_spec in comp_archive_spec.findall("files/file_extension"):
+                if file_spec.find("tseries_create") is not None:
+                    tseries_create = file_spec.find("tseries_create").text
+                if tseries_create.upper() in ["T","TRUE"]: 
+                   if file_spec.find("tseries_filecat_tper") is not None:
+                        tper = file_spec.find("tseries_filecat_tper").text
+                        if file_spec.find("tseries_filecat_n") is not None:
+                            size = file_spec.find("tseries_filecat_n").text
+                            s = size.split(',')
+                            t = tper.split(',')
+                            for it in range(0,len(t)):
+                                for i in range(0,len(tpers)):
+                                    if tpers[i] in t[it]:
+                                        c_size = int(sizes[i])*int(s[it])
+                                        if c_size < s_size:
+                                            i_tper = i
+                                            i_size = s[it]
+                                            s_size = c_size
+        # We don't want this interval shorter than the cesm run length, if it is, set to cesm stop_n and stop_option
+        for i in range(0,len(tpers)):
+           if tpers[i] in stop_option:
+               c_size = int(sizes[i])*int(stop_n)
+               if c_size > s_size:
+                   i_size = stop_n
+                   i_tper = i
+
+        return tpers[i_tper],i_size
+
+    def get_tseries_resubmit(self, ts_tper, ts_n, stop_n, stop_option):
+
+        tpers = ['hour', 'day', 'month', 'year']
+        sizes = [1, 24, 720, 8760]
+        if ts_tper not in stop_option and stop_option not in ts_tper:
+            for i in range(0,len(tpers)):
+                if tpers[i] in ts_tper:
+                    ts = ts_n * sizes[i]
+                if tpers[i] in stop_option:
+                    cesm = stop_n * sizes[i]
+        else:
+            ts = ts_n
+            cesm = stop_n
+
+        if ts%cesm > 0:
+            freq = (ts/cesm)+1
+        else:
+            freq = (ts/cesm)
+        return freq  
+               
+         
 
     def get_env(self):
         my_case = os.getcwd() + '/../'
@@ -74,7 +136,7 @@ class EnvCylc():
         env_run = EnvRun()
         env_build = EnvBuild() 
         env_batch = case.get_env("batch")
-        os.system('./xmlchange RESUBMIT=0')
+#######        os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
         
         directives = {}
@@ -105,7 +167,7 @@ class EnvCylc():
             self.ptile = str(task_maker.ptile)
             self.totaltasks = task_count
         
-            direct = '' 
+            direct = ''
             ds = env_batch.get_batch_directives(case, job, raw=True)
             dss = ds.split('\n') 
             for d in dss:  
@@ -162,6 +224,9 @@ class EnvCylc():
         pp_dir = my_case+'/postprocess/'
    
         self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
+        self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
+        self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],
+                                                                    self.env['STOP_N'],self.env['STOP_OPTION'])
  
         self.env['GENERATE_AVGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ATM', shell=True)
         self.env['GENERATE_DIAGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ATM', shell=True)

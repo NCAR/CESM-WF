@@ -105,9 +105,22 @@ def create_graph(keys, tasks):
             if date in tasks[tool].specs['date_queue']:
                 # Add task to graph
                 if date in tasks[tasks[tool].specs['dependancy']].specs['date_queue']:
+
                     g.add_depend(tasks[tool].specs['dependancy']+'_'+date, tool+'_'+date,
                                  tasks[tool].specs['dependancy']+'_'+tasks[tasks[tool].specs['dependancy']].specs['actual_dates'][date],
                                  tool+'_'+tasks[tool].specs['actual_dates'][date])
+ 
+                    if tool == 'timeseries':
+                        i = tasks[tool].specs['date_queue'].index(date)-1
+                        if i >= 0:
+                            prev_date = tasks[tool].specs['date_queue'][i]
+                            g.add_depend(tool+'_'+prev_date, tool+'_'+date, 
+                                         tool+'_'+prev_date, tool+'_'+date)
+
+                    if tool == 'timeseriesL':
+                        prev_date = tasks['timeseries'].specs['date_queue'][-1]
+                        g.add_depend('timeseries_'+prev_date, tool+'_'+date,
+                                         'timeseries_'+prev_date, tool+'_'+date)                    
                 else:
                     # There was not a dependancy date that matches for the current tool date
                     # If possible, match it up.
@@ -135,6 +148,6 @@ def create_graph(keys, tasks):
                     d = d + t.depends[i]
                     if i < len(t.depends)-1:
                         d = d + ' & '
-                #print d     
+                print d     
     return g           
             #print t.get_id(),'->',t.depends

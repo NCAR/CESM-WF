@@ -22,7 +22,10 @@ class toolTemplate(object):
         
         elif (tool_type == 'timeseries'):
             specs = self.tseries_specs(env)
-        
+       
+        elif (tool_type == 'timeseriesL'):
+            specs = self.tseriesL_specs(env)
+ 
         elif (tool_type == 'atm_averages'):
             specs = self.avg_atm_specs(env)
         
@@ -87,16 +90,16 @@ class toolTemplate(object):
         day = int(date_split[2])
 
         # Adjust the correct portion of the date based on tper
-        if 'nday' in tper:
+        if 'day' in tper:
             day = day + int(n)
-        elif 'nmonth' in tper:
+        elif 'month' in tper:
             if n >= 12:
                 m = int(n)%12
                 year = year + (int(n)/12)
             else:
                 m = n
             month = month + int(m)
-        elif 'nyear' in tper:
+        elif 'year' in tper:
             year = year + int(n)
 
         # Make the date correct if it went over boundaries
@@ -197,9 +200,28 @@ class toolTemplate(object):
             specs['dependancy'] = ''
         return specs
 
-
-
     def tseries_specs(self, env):
+
+        specs = {}
+        if 'TRUE' in env['GENERATE_TIMESERIES'] :
+            date_queue = []
+            date_queue.append(self.next_date(env['RUN_STARTDATE'],env['TIMESERIES_N'],env['TIMESERIES_TPER']))
+        
+            for i in range(0,int(env['RESUBMIT'])-1,int(env['TIMESERIES_RESUBMIT'])):
+                date_queue.append(self.next_date(date_queue[i], env['TIMESERIES_N'], env['TIMESERIES_TPER']))    
+
+            dependancy = 'case_st_archive'
+
+            specs['date_queue'] = date_queue
+            specs['dependancy'] = dependancy
+        else:
+            specs['date_queue'] = []
+            specs['dependancy'] = ''
+        print specs
+        return specs
+
+
+    def tseriesL_specs(self, env):
 
         specs = {}
         if 'TRUE' in env['GENERATE_TIMESERIES'] :
