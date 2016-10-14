@@ -41,6 +41,22 @@ def create_new_run_script():
     st = os.stat('../case.run.cylc')
     os.chmod('../case.run.cylc', st.st_mode | stat.S_IEXEC)
 
+
+def create_last_tseries_script():
+    f_new = open('../postprocess/timeseriesL','w')
+    f_old = open('../postprocess/timeseries','r')
+    for line in f_old:
+        if '--completechunk' in line:
+            new_line = line.replace('--completechunk 1', '--completechunk 0')
+            f_new.write(new_line+'\n')
+        else:
+            f_new.write(line)
+    f_new.close()
+    f_old.close()
+    st = os.stat('../postprocess/timeseriesL')
+    os.chmod('../postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
+
+
 def main(argv=None):
 
     args = parseArgs(argv)
@@ -65,6 +81,9 @@ def main(argv=None):
     print 'DOUT_L_MS: ', env['DOUT_L_MS']
     print 'CASEROOT: ', env['CASEROOT']
     print 'GENERATE_TIMESERIES: ', env['GENERATE_TIMESERIES']
+    print 'TIMESERIES_TPER: ', env['TIMESERIES_TPER']
+    print 'TIMESERIES_N: ', env['TIMESERIES_N']
+    print 'TIMESERIES_RESUBMIT: ', env['TIMESERIES_RESUBMIT']
     print 'GENERATE_AVGS_ATM: ', env['GENERATE_AVGS_ATM']
     print 'GENERATE_DIAGS_ATM: ', env['GENERATE_DIAGS_ATM']
     print 'ATMDIAG_test_first_yr: ', env['ATMDIAG_test_first_yr']
@@ -91,7 +110,7 @@ def main(argv=None):
     print 'ICEDIAG_DIFF_TIMESERIES: ', env['ICEDIAG_DIFF_TIMESERIES']
     print 'Directives: ',env['directives']
 
-    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'atm_averages', 'atm_diagnostics',
+    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'atm_averages', 'atm_diagnostics',
             'ocn_averages', 'ocn_diagnostics', 'lnd_averages', 'lnd_diagnostics', 'ice_averages', 'ice_diagnostics']
 
     template = {}
@@ -101,13 +120,15 @@ def main(argv=None):
     for tool in keys:
         toolTemplate.align_dates(template['case_run'].specs, template[tool].specs, tool)
 
-
     g = graph.create_graph(keys,template)
+
     cylc_template.create_cylc_input(g, env, 'suite.rc')
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 
     create_new_run_script()
+
+    create_last_tseries_script()
 
 if __name__ == '__main__':
     main()

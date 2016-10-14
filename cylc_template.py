@@ -1,6 +1,7 @@
 # The run commands to run each of the tasks
 commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
             'timeseries': 'postprocess/timeseries', 
+            'timeseriesL': 'postprocess/timeseriesL',
             'atm_averages': 'postprocess/atm_averages', 'atm_diagnostics': 'postprocess/atm_diagnostics',
             'ocn_averages': 'postprocess/ocn_averages', 'ocn_diagnostics': 'postprocess/ocn_diagnostics', 
             'lnd_averages': 'postprocess/lnd_averages', 'lnd_diagnostics': 'postprocess/lnd_diagnostics',
@@ -53,8 +54,12 @@ def create_cylc_input(graph, env, fn):
         f.write('        [[[job submission]]]\n'+
                 '                method = lsf\n'+
                 '        [[[directives]]]\n')
-        for d in env['directives'][tool]:
-            f.write('                '+d+'\n')
+        if tool == 'timeseriesL':
+            for d in env['directives']['timeseries']:
+                f.write('                '+d+'\n')
+        else:
+            for d in env['directives'][tool]:
+                f.write('                '+d+'\n')
         f.write('        [[[event hooks]]]\n'+
                 '                started handler = cylc email-suite\n'+
                 '                succeeded handler = cylc email-suite\n'+
