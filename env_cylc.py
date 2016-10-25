@@ -136,7 +136,7 @@ class EnvCylc():
         env_run = EnvRun()
         env_build = EnvBuild() 
         env_batch = case.get_env("batch")
-#######        os.system('./xmlchange RESUBMIT=0')
+        os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
         
         directives = {}
