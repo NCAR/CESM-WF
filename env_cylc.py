@@ -100,16 +100,17 @@ class EnvCylc():
 
         tpers = ['hour', 'day', 'month', 'year']
         sizes = [1, 24, 720, 8760]
+        ts = 0
+        cesm = 0
         if ts_tper not in stop_option and stop_option not in ts_tper:
             for i in range(0,len(tpers)):
                 if tpers[i] in ts_tper:
-                    ts = ts_n * sizes[i]
+                    ts = int(ts_n) * sizes[i]
                 if tpers[i] in stop_option:
-                    cesm = stop_n * sizes[i]
+                    cesm = int(stop_n) * sizes[i]
         else:
             ts = ts_n
             cesm = stop_n
-
         if ts%cesm > 0:
             freq = (ts/cesm)+1
         else:

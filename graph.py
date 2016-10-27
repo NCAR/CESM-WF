@@ -118,8 +118,9 @@ def create_graph(keys, tasks):
                                          tool+'_'+prev_date, tool+'_'+date)
 
                     if tool == 'timeseriesL':
-                        prev_date = tasks['timeseries'].specs['date_queue'][-1]
-                        g.add_depend('timeseries_'+prev_date, tool+'_'+date,
+                        if len(tasks['timeseries'].specs['date_queue']) > 1:
+                            prev_date = tasks['timeseries'].specs['date_queue'][-1]
+                            g.add_depend('timeseries_'+prev_date, tool+'_'+date,
                                          'timeseries_'+prev_date, tool+'_'+date)                    
                 else:
                     # There was not a dependancy date that matches for the current tool date
