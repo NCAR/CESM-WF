@@ -245,7 +245,7 @@ class toolTemplate(object):
         # the tseries variable in the diag_atm file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_ATM'] :
+        if 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
             year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])  
@@ -274,7 +274,7 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_atm. It will be inserted after avg_atm.
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_ATM']  and 'TRUE' in env['GENERATE_AVGS_ATM'] :
+        if 'TRUE' in env['GENERATE_DIAGS_ATM']  and 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
             year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) 
@@ -302,7 +302,7 @@ class toolTemplate(object):
         # the tseries variable in the diag_ocn file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_OCN'] :
+        if 'TRUE' in env['GENERATE_AVGS_OCN'] and env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit():
             # Get the last year needed
             if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']): 
                 year = int(env['OCNDIAG_YEAR1']) 
@@ -329,7 +329,7 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_ocn. It will be inserted after avg_ocn. 
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_OCN']  and 'TRUE' in env['GENERATE_AVGS_OCN'] :
+        if 'TRUE' in env['GENERATE_DIAGS_OCN']  and 'TRUE' in env['GENERATE_AVGS_OCN'] and env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit():
             # Get the last year needed 
             if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']):
                 year = int(env['OCNDIAG_YEAR1']) 
@@ -356,7 +356,7 @@ class toolTemplate(object):
         # the tseries variable in the diag_lnd file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_LND'] :
+        if 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
             # Get the last year needed
             climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) 
             trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) 
@@ -392,7 +392,7 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_lnd. It will be inserted after avg_lnd.
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_LND']  and 'TRUE' in env['GENERATE_AVGS_LND'] :
+        if 'TRUE' in env['GENERATE_DIAGS_LND']  and 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
             # Get the last year needed 
             climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) 
             trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) 
@@ -425,7 +425,7 @@ class toolTemplate(object):
         # the tseries variable in the diag_ice file.  It will be inserted based on the last day 
         # needed for the diags.
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_ICE'] :
+        if 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
             year = int(env['ICEDIAG_ENDYR_DIFF']) 
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
@@ -447,7 +447,7 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] :
+        if 'TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
             year = int(env['ICEDIAG_ENDYR_DIFF'])
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
