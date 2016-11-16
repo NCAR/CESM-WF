@@ -5,12 +5,12 @@ from standard_script_setup          import *
 from CIME.case import Case
 from CIME.utils import transform_vars
 from CIME.XML.machines import Machines
-from CIME.task_maker import TaskMaker
 from CIME.XML.batch                 import Batch
 from CIME.XML.env_run               import EnvRun
 from CIME.XML.env_case              import EnvCase
 from CIME.XML.env_build             import EnvBuild        
-        
+from CIME.XML.env_mach_pes     import EnvMachPes       
+ 
 class EnvCylc():
         
     def __init__(self):
@@ -142,32 +142,34 @@ class EnvCylc():
         
         directives = {}
         
-        task_maker = TaskMaker(case)
-        
-        task_maker = TaskMaker(case)
-        
-        
-         
         bjobs = batch.get_batch_jobs()
         for job, jsect in bjobs:
             job_ = str.replace(job,'.','_')
             directives[job_] = []
-            task_count = jsect["task_count"]
-            if task_count is None or task_count == "default":
-                task_count = str(task_maker.totaltasks)
+
+            #task_count = jsect["task_count"]
+            task_count = env_batch.get_value("task_count", subgroup=job)
+            if task_count == "default":
+                models = case.get_values("COMP_CLASSES")
+                env_mach_pes = EnvMachPes(infile='../env_mach_pes.xml') 
+                task_count = env_mach_pes.get_total_tasks(models)
+                ptile = env_batch.get_value("PES_PER_NODE")
             else:
-                task_count = int(task_count)
-            queue = env_batch.select_best_queue(task_count,job)
+                ptile = 4                
+
+            self.ptile = ptile
+            self.total_tasks = task_count
+            self.tasks_per_node = ptile
+           
+
+            queue = env_batch.select_best_queue(int(task_count),job)
             if queue is None:
-                queue = env_batch.select_best_queue(task_maker.totaltasks,job)
-            wall_time = env_batch.get_max_walltime(queue)
-            if wall_time is None:
-                wall_time = env_batch.get_default_walltime()
+                queue = env_batch.select_best_queue(task_count,job)
+            wall_time=None
+            wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
             env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time)
             env_batch.set_value("JOB_QUEUE", queue)
-            self.ptile = str(task_maker.ptile)
-            self.totaltasks = task_count
-        
+
             direct = ''
             ds = env_batch.get_batch_directives(case, job, raw=True)
             dss = ds.split('\n') 
@@ -197,15 +199,15 @@ class EnvCylc():
         self.env['DOUT_L_MS'] = env_run.get_value('DOUT_L_MS')
         self.env['CASEROOT'] = env_case.get_value('CASEROOT')
         self.env['CASE'] = env_case.get_value('CASE')
-        self.env['RUNDIR'] = env_run.get_value('RUNDIR')        
+        self.env['RUNDIR'] = case.get_value('RUNDIR')        
         self.env['CESMSCRATCHROOT'] = env_build.get_value('CESMSCRATCHROOT')
         self.env['USER'] = env_case.get_value('USER')
         # Resolve RUNDIR
-        while '$' in str(self.env['RUNDIR']):
-            split = str(self.env['RUNDIR']).split('/')
-            for v in split:
-                if '$' in v:
-                    self.env['RUNDIR'] = str.replace(self.env['RUNDIR'],v,self.env[v[1:]])
+        #while '$' in str(self.env['RUNDIR']):
+        #    split = str(self.env['RUNDIR']).split('/')
+        #    for v in split:
+        #        if '$' in v:
+        #            self.env['RUNDIR'] = str.replace(self.env['RUNDIR'],v,env_run.get_value(v[1:]))
         cont_run = env_run.get_value('CONTINUE_RUN')
         if not cont_run:
             start = env_run.get_value('RUN_STARTDATE')

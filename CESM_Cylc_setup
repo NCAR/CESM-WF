@@ -74,6 +74,7 @@ def main(argv=None):
         env['email'] = getpass.getuser()+'@ucar.edu' 
 
     print 'RESUBMIT: ', env['RESUBMIT']
+    print 'RUNDIR: ', env['RUNDIR']
     print 'RUN_STARTDATE: ', env['RUN_STARTDATE']
     print 'STOP_N: ', env['STOP_N']
     print 'STOP_OPTION: ', env['STOP_OPTION']
