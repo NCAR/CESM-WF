@@ -1,22 +1,19 @@
-import os, sys, math, subprocess, glob
+import os, sys, subprocess, glob
         
-import cesmEnvLib
 from standard_script_setup          import *
 from CIME.case import Case
 from CIME.utils import transform_vars
-from CIME.XML.machines import Machines
 from CIME.XML.batch                 import Batch
-from CIME.XML.env_run               import EnvRun
-from CIME.XML.env_case              import EnvCase
-from CIME.XML.env_build             import EnvBuild        
-from CIME.XML.env_mach_pes     import EnvMachPes       
  
 class EnvCylc():
         
     def __init__(self):
         self.env = {}    
+        self.ptile = None
+        self.total_tasks = None
+        self.tasks_per_node = None
 
-    def get_date(self, runDir, doutDir):
+    def get_date(self, runDir):
 
         dates = {}
         rpointers = glob.glob(str(runDir)+'/rpointer.*')
@@ -127,15 +124,11 @@ class EnvCylc():
         cwd = os.getcwd()
         os.chdir(my_case)
 
-        env_case = EnvCase()
-        machine_name = env_case.get_value('MACH')
+        machine_name = case.get_value('MACH')
         print 'Running on ',machine_name
 
-        env_mach = Machines(machine=machine_name)
-        batch_system = env_mach.get_value("BATCH_SYSTEM")
+        batch_system = case.get_value("BATCH_SYSTEM")
         batch = Batch(batch_system=batch_system, machine=machine_name)
-        env_run = EnvRun()
-        env_build = EnvBuild() 
         env_batch = case.get_env("batch")
         if debug is False:
             os.system('./xmlchange RESUBMIT=0')
@@ -144,7 +137,7 @@ class EnvCylc():
         directives = {}
         
         bjobs = batch.get_batch_jobs()
-        for job, jsect in bjobs:
+        for job, _ in bjobs:
             job_ = str.replace(job,'.','_')
             directives[job_] = []
 
@@ -152,9 +145,9 @@ class EnvCylc():
             task_count = env_batch.get_value("task_count", subgroup=job)
             if task_count == "default":
                 models = case.get_values("COMP_CLASSES")
-                env_mach_pes = EnvMachPes(infile='../env_mach_pes.xml') 
+                env_mach_pes = case.get_env("mach_pes") 
                 task_count = env_mach_pes.get_total_tasks(models)
-                ptile = env_batch.get_value("PES_PER_NODE")
+                ptile = case.get_value("PES_PER_NODE")
             else:
                 ptile = 4                
 
@@ -168,8 +161,8 @@ class EnvCylc():
                 queue = env_batch.select_best_queue(task_count,job)
             wall_time=None
             wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
-            env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time)
-            env_batch.set_value("JOB_QUEUE", queue)
+            env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time, subgroup=job)
+            env_batch.set_value("JOB_QUEUE", queue, subgroup=job)
 
             direct = ''
             ds = env_batch.get_batch_directives(case, job, raw=True)
@@ -193,27 +186,21 @@ class EnvCylc():
                         directives[job_].append(d[0]+' = '+d[1])
 
         self.env['directives'] = directives
-        self.env['STOP_N'] = env_run.get_value("STOP_N")
-        self.env['RESUBMIT'] = env_run.get_value("RESUBMIT")
-        self.env['STOP_OPTION'] = env_run.get_value('STOP_OPTION')
-        self.env['DOUT_S'] = env_run.get_value('DOUT_S')
-        self.env['DOUT_L_MS'] = env_run.get_value('DOUT_L_MS')
-        self.env['CASEROOT'] = env_case.get_value('CASEROOT')
-        self.env['CASE'] = env_case.get_value('CASE')
+        self.env['STOP_N'] = case.get_value("STOP_N")
+        self.env['RESUBMIT'] = case.get_value("RESUBMIT")
+        self.env['STOP_OPTION'] = case.get_value('STOP_OPTION')
+        self.env['DOUT_S'] = case.get_value('DOUT_S')
+        self.env['DOUT_L_MS'] = case.get_value('DOUT_L_MS')
+        self.env['CASEROOT'] = case.get_value('CASEROOT')
+        self.env['CASE'] = case.get_value('CASE')
         self.env['RUNDIR'] = case.get_value('RUNDIR')        
-        self.env['CESMSCRATCHROOT'] = env_build.get_value('CESMSCRATCHROOT')
-        self.env['USER'] = env_case.get_value('USER')
-        # Resolve RUNDIR
-        #while '$' in str(self.env['RUNDIR']):
-        #    split = str(self.env['RUNDIR']).split('/')
-        #    for v in split:
-        #        if '$' in v:
-        #            self.env['RUNDIR'] = str.replace(self.env['RUNDIR'],v,env_run.get_value(v[1:]))
-        cont_run = env_run.get_value('CONTINUE_RUN')
+        self.env['CESMSCRATCHROOT'] = case.get_value('CIME_OUTPUT_ROOT')
+        self.env['USER'] = case.get_value('USER')
+        cont_run = case.get_value('CONTINUE_RUN')
         if not cont_run:
-            start = env_run.get_value('RUN_STARTDATE')
+            start = case.get_value('RUN_STARTDATE')
         else:
-            start = self.get_date(self.env['RUNDIR'],self.env['DOUT_S'])
+            start = self.get_date(self.env['RUNDIR'])
         if debug is True:
             valid = True
             self.env['RUN_STARTDATE'] = start
@@ -227,7 +214,7 @@ class EnvCylc():
             elif choice == 'N' or choice == 'n':
                 valid = True
                 user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
-        env_run.set_value("RUN_WITH_SUBMIT", True)
+        case.set_value("RUN_WITH_SUBMIT", True)
        
         pp_dir = my_case+'/postprocess/'
    

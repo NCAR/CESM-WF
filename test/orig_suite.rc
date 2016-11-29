@@ -38,7 +38,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -72,7 +72,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -106,7 +106,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -140,7 +140,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -174,7 +174,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -208,7 +208,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -242,7 +242,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -276,7 +276,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -310,7 +310,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -344,7 +344,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
@@ -378,7 +378,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 method = lsf
         [[[directives]]]
                 -n = 690
-                -R = "span[ptile=]"
+                -R = "span[ptile=15]"
                 -a = poe
                 -o = cesm.stdout.%J
                 -e = cesm.stderr.%J
