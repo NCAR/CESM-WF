@@ -119,7 +119,7 @@ class EnvCylc():
                
          
 
-    def get_env(self):
+    def get_env(self, debug):
         my_case = os.getcwd() + '/../'
         
         case = Case(my_case, read_only=False)
@@ -137,7 +137,8 @@ class EnvCylc():
         env_run = EnvRun()
         env_build = EnvBuild() 
         env_batch = case.get_env("batch")
-        os.system('./xmlchange RESUBMIT=0')
+        if debug is False:
+            os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
         
         directives = {}
@@ -213,7 +214,11 @@ class EnvCylc():
             start = env_run.get_value('RUN_STARTDATE')
         else:
             start = self.get_date(self.env['RUNDIR'],self.env['DOUT_S'])
-        valid = False
+        if debug is True:
+            valid = True
+            self.env['RUN_STARTDATE'] = start
+        else:
+            valid = False
         while not valid:
             choice = str(raw_input("Use start date "+start+"? y/n \n"))
             if choice == 'Y' or choice == 'y':
@@ -270,9 +275,9 @@ class EnvCylc():
 
         return self.env        
 
-def get_env():
+def get_env(debug=False):
     cylc = EnvCylc()
-    env = cylc.get_env()
+    env = cylc.get_env(debug)
     return env
 #for k in env.keys():
 #    print k,': ',env[k]
