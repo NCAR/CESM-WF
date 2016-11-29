@@ -65,7 +65,6 @@ def main(argv=None):
     sys.path.append(_LIBDIR)
 
     import env_cylc
-
     env = env_cylc.get_env()
 
     if args.email != None:
