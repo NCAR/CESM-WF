@@ -95,7 +95,9 @@ class TestCylc(unittest.TestCase):
 	self.assertEqual(self.env['ICEDIAG_BEGYR_DIFF'], '40')
 	self.assertEqual(self.env['ICEDIAG_ENDYR_DIFF'], '65')
 	self.assertEqual(self.env['ICEDIAG_DIFF_TIMESERIES'], 'FALSE')
-        directives = {'case_run': ['-n = 690', '-R = "span[ptile=]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002']}
+        directives = {'case_run': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002']}
+        print directives
+        print self.env['directives']
 	self.assertEqual(self.env['directives'], directives)
 
 def test_setup(download):
