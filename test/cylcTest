@@ -5,12 +5,12 @@ import create_newcase
 
 import unittest
 
-svn = 'https://svn-ccsm-models.cgd.ucar.edu/cesm2/beta/tags/cesm2_0_beta04'
+svn = 'https://svn-ccsm-models.cgd.ucar.edu/cesm2/alpha/tags/cesm2_0_alpha06d'
 version = svn.split('/')[-1]
 cdir = os.getcwd()
-cesmdir = os.getcwd()+'/../../'
+cesmdir = os.getcwd()+'/../../../'
 cesm_code_base = cesmdir+'/'+version
-new_case = './create_newcase  -case /glade/scratch/'+os.environ['USER']+'/cylc_testing/test_setup.f09_g16.BC5L45BGC.'+version+' -res f09_g16 -compset BC5L45BGC'
+new_case = './create_newcase  -case /glade/scratch/'+os.environ['USER']+'/cylc_testing/test_setup.f09_g16.B1850 -res f09_g16 -compset B1850'
 nc_split = new_case.split(' ')
 for i in range(0,len(nc_split)):
     if '-case' in nc_split[i]:
@@ -60,13 +60,13 @@ class TestCylc(unittest.TestCase):
         os.chdir(case_root+'/postprocess')
 
         self.assertEqual(self.env['RESUBMIT'], '10')
-	self.assertEqual(self.env['RUNDIR'], '/glade/scratch/mickelso/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/run')
+	self.assertEqual(self.env['RUNDIR'], '/glade/scratch/mickelso/test_setup.f09_g16.B1850/run')
 	self.assertEqual(self.env['RUN_STARTDATE'], '0001-01-01')
 	self.assertEqual(self.env['STOP_N'], '10')
 	self.assertEqual(self.env['STOP_OPTION'], 'nyears')
 	self.assertEqual(self.env['DOUT_S'], 'TRUE')
 	self.assertEqual(self.env['DOUT_L_MS'], 'FALSE')
-	self.assertEqual(self.env['CASEROOT'], '/glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04')
+	self.assertEqual(self.env['CASEROOT'], '/glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850')
 	self.assertEqual(self.env['GENERATE_TIMESERIES'], 'FALSE')
 	self.assertEqual(self.env['TIMESERIES_TPER'], 'year')
 	self.assertEqual(self.env['TIMESERIES_N'], '10')
@@ -103,7 +103,7 @@ class TestCylc(unittest.TestCase):
 def test_setup(download):
 
     if download:
-	os.chdir('../../')
+	os.chdir('../../../')
 
 	print '############################################'
 	print ''
