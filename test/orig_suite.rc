@@ -1,4 +1,4 @@
-title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow 
+title = test_setup.f09_g16.B1850 workflow 
 [cylc]
     [[environment]]
         MAIL_ADDRESS=foo@bar
@@ -31,9 +31,9 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                """
 [runtime]
     [[root]]
-        pre-script = "cd /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04"
+        pre-script = "cd /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850"
     [[case_run_0011-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -50,7 +50,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0011-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -67,7 +67,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0021-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -84,7 +84,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0021-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -101,7 +101,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0031-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -118,7 +118,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0031-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -135,7 +135,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0041-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -152,7 +152,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0041-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -169,7 +169,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0051-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -186,7 +186,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0051-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -203,7 +203,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0061-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -220,7 +220,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0061-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -237,7 +237,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0071-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -254,7 +254,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0071-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -271,7 +271,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0081-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -288,7 +288,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0081-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -305,7 +305,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0091-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -322,7 +322,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0091-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -339,7 +339,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0101-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -356,7 +356,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0101-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -373,7 +373,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_run_0111-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.run.cylc
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
@@ -390,7 +390,7 @@ title = test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04 workflow
                 succeeded handler = cylc email-suite
                 failed handler = cylc email-suite
     [[case_st_archive_0111-01-01 ]]
-        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.BC5L45BGC.cesm2_0_beta04/case.st_archive
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
         [[[job submission]]]
                 method = lsf
         [[[directives]]]
