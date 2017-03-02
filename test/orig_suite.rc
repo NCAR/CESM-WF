@@ -1,0 +1,408 @@
+title = test_setup.f09_g16.B1850 workflow 
+[cylc]
+    [[environment]]
+        MAIL_ADDRESS=foo@bar
+    [[event hooks]]
+        shutdown handler = cylc email-suite
+[scheduling]
+    [[dependencies]]
+        graph = """
+                    case_run_0011-01-01 => case_st_archive_0011-01-01
+                    case_st_archive_0011-01-01 => case_run_0021-01-01
+                    case_run_0021-01-01 => case_st_archive_0021-01-01
+                    case_st_archive_0021-01-01 => case_run_0031-01-01
+                    case_run_0031-01-01 => case_st_archive_0031-01-01
+                    case_st_archive_0031-01-01 => case_run_0041-01-01
+                    case_run_0041-01-01 => case_st_archive_0041-01-01
+                    case_st_archive_0041-01-01 => case_run_0051-01-01
+                    case_run_0051-01-01 => case_st_archive_0051-01-01
+                    case_st_archive_0051-01-01 => case_run_0061-01-01
+                    case_run_0061-01-01 => case_st_archive_0061-01-01
+                    case_st_archive_0061-01-01 => case_run_0071-01-01
+                    case_run_0071-01-01 => case_st_archive_0071-01-01
+                    case_st_archive_0071-01-01 => case_run_0081-01-01
+                    case_run_0081-01-01 => case_st_archive_0081-01-01
+                    case_st_archive_0081-01-01 => case_run_0091-01-01
+                    case_run_0091-01-01 => case_st_archive_0091-01-01
+                    case_st_archive_0091-01-01 => case_run_0101-01-01
+                    case_run_0101-01-01 => case_st_archive_0101-01-01
+                    case_st_archive_0101-01-01 => case_run_0111-01-01
+                    case_run_0111-01-01 => case_st_archive_0111-01-01
+               """
+[runtime]
+    [[root]]
+        pre-script = "cd /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850"
+    [[case_run_0011-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0011-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0021-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0021-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0031-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0031-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0041-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0041-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0051-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0051-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0061-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0061-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0071-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0071-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0081-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0081-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0091-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0091-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0101-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0101-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0111-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0111-01-01 ]]
+        script = /glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite

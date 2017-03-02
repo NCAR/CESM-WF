@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
 import cesmEnvLib
-import argparse, os
+import argparse, os, stat, sys
 import toolTemplate
 import graph
 import cylc_template
+import getpass
 
 def parseArgs(argv = None):
 
@@ -12,6 +13,8 @@ def parseArgs(argv = None):
 
     parser = argparse.ArgumentParser(prog='CESM_Cylc_setup',
                                      description=desc)
+    parser.add_argument('-c','--cime',default=None, type=str,
+                        help='Path to CIME root.', required=True)
     parser.add_argument('-p','--path',default=None, type=str,
                         help='Path to output Cylc Suite.  It will be create if it does not exist.', required=True)
     parser.add_argument('-s','--suite',default=None, type=str,
@@ -19,38 +22,73 @@ def parseArgs(argv = None):
 
     parser.add_argument('-g','--graph',default=None, type=str,
                         help='Name of output graph image.', required=False) 
+    parser.add_argument('-e','--email',default=None, type=str,
+                        help='Email address to send run updates to', required=False)
     return parser.parse_args(argv)
+
+
+def create_new_run_script():
+    f_new = open('../case.run.cylc','w')
+    f_old = open('../case.run','r')
+    for line in f_old:
+        if 'caseroot = parse_command_line' in line:
+            f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
+        f_new.write(line)
+        if 'success = case_run(case)' in line:
+            f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
+    f_new.close()
+    f_old.close()
+    st = os.stat('../case.run.cylc')
+    os.chmod('../case.run.cylc', st.st_mode | stat.S_IEXEC)
+
+
+def create_last_tseries_script():
+    f_new = open('../postprocess/timeseriesL','w')
+    f_old = open('../postprocess/timeseries','r')
+    for line in f_old:
+        if '--completechunk' in line:
+            new_line = line.replace('--completechunk 1', '--completechunk 0')
+            f_new.write(new_line+'\n')
+        else:
+            f_new.write(line)
+    f_new.close()
+    f_old.close()
+    st = os.stat('../postprocess/timeseriesL')
+    os.chmod('../postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
 
 
 def main(argv=None):
 
     args = parseArgs(argv)
 
-    caseroot = os.getcwd()+'/../' 
+    _LIBDIR = os.path.join(args.cime,"scripts", "Tools")
+    sys.path.append(_LIBDIR)
 
-    env_file_list = ['env_run.xml', 'env_batch.xml', 'env_case.xml', 'env_mach_pes.xml',
-                     'env_build.xml', 'postprocess/env_postprocess.xml', 'postprocess/env_diags_atm.xml', 
-                     'postprocess/env_diags_ocn.xml', 'postprocess/env_diags_lnd.xml',
-                     'postprocess/env_diags_ice.xml']  
+    import env_cylc
+    env = env_cylc.get_env()
 
-    env = cesmEnvLib.readXML(caseroot, env_file_list)
-    print '\n'
+    if args.email != None:
+        env['email'] = args.email
+    else:
+        env['email'] = getpass.getuser()+'@ucar.edu' 
+
     print 'RESUBMIT: ', env['RESUBMIT']
+    print 'RUNDIR: ', env['RUNDIR']
     print 'RUN_STARTDATE: ', env['RUN_STARTDATE']
     print 'STOP_N: ', env['STOP_N']
     print 'STOP_OPTION: ', env['STOP_OPTION']
     print 'DOUT_S: ', env['DOUT_S']
     print 'DOUT_L_MS: ', env['DOUT_L_MS']
     print 'CASEROOT: ', env['CASEROOT']
-    print '\n'
     print 'GENERATE_TIMESERIES: ', env['GENERATE_TIMESERIES']
-    print '\n'
+    print 'TIMESERIES_TPER: ', env['TIMESERIES_TPER']
+    print 'TIMESERIES_N: ', env['TIMESERIES_N']
+    print 'TIMESERIES_RESUBMIT: ', env['TIMESERIES_RESUBMIT']
     print 'GENERATE_AVGS_ATM: ', env['GENERATE_AVGS_ATM']
     print 'GENERATE_DIAGS_ATM: ', env['GENERATE_DIAGS_ATM']
     print 'ATMDIAG_test_first_yr: ', env['ATMDIAG_test_first_yr']
     print 'ATMDIAG_test_nyrs: ', env['ATMDIAG_test_nyrs']
     print 'ATMDIAG_TEST_TIMESERIES: ', env['ATMDIAG_TEST_TIMESERIES']
-    print '\n'
     print 'GENERATE_AVGS_OCN: ', env['GENERATE_AVGS_OCN']
     print 'GENERATE_DIAGS_OCN: ', env['GENERATE_DIAGS_OCN']
     print 'OCNDIAG_YEAR0: ', env['OCNDIAG_YEAR0']
@@ -58,7 +96,6 @@ def main(argv=None):
     print 'OCNDIAG_TSERIES_YEAR0: ', env['OCNDIAG_TSERIES_YEAR0']
     print 'OCNDIAG_TSERIES_YEAR1: ', env['OCNDIAG_TSERIES_YEAR1']
     print 'OCNDIAG_MODELCASE_INPUT_TSERIES: ', env['OCNDIAG_MODELCASE_INPUT_TSERIES']
-    print '\n'
     print 'GENERATE_AVGS_LND: ', env['GENERATE_AVGS_LND']
     print 'GENERATE_DIAGS_LND: ', env['GENERATE_DIAGS_LND']
     print 'LNDDIAG_clim_first_yr_1: ', env['LNDDIAG_clim_first_yr_1']
@@ -66,30 +103,32 @@ def main(argv=None):
     print 'LNDDIAG_trends_first_yr_1: ',env['LNDDIAG_trends_first_yr_1']
     print 'LNDDIAG_trends_num_yrs_1: ', env['LNDDIAG_trends_num_yrs_1']
     print 'LNDDIAG_CASE1_TIMESERIES: ', env['LNDDIAG_CASE1_TIMESERIES']
-    print '\n'
     print 'GENERATE_AVGS_ICE: ', env['GENERATE_AVGS_ICE']
     print 'GENERATE_DIAGS_ICE: ', env['GENERATE_DIAGS_ICE']
     print 'ICEDIAG_BEGYR_DIFF: ', env['ICEDIAG_BEGYR_DIFF']
     print 'ICEDIAG_ENDYR_DIFF: ', env['ICEDIAG_ENDYR_DIFF']
     print 'ICEDIAG_DIFF_TIMESERIES: ', env['ICEDIAG_DIFF_TIMESERIES']
-    print '\n'
+    print 'Directives: ',env['directives']
 
-    keys = ['cesm', 'sta', 'lta', 'tseries', 'avg_atm', 'diag_atm',
-            'avg_ocn', 'diag_ocn', 'avg_lnd', 'diag_lnd', 'avg_ice', 'diag_ice']
+    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'atm_averages', 'atm_diagnostics',
+            'ocn_averages', 'ocn_diagnostics', 'lnd_averages', 'lnd_diagnostics', 'ice_averages', 'ice_diagnostics']
 
     template = {}
     for tool in keys:
         template[tool] = toolTemplate.toolTemplate(tool, env)
-        print tool,template[tool].specs
 
     for tool in keys:
-        toolTemplate.align_dates(template['cesm'].specs, template[tool].specs, tool)
-
+        toolTemplate.align_dates(template['case_run'].specs, template[tool].specs, tool)
 
     g = graph.create_graph(keys,template)
+
     cylc_template.create_cylc_input(g, env, 'suite.rc')
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
+
+    create_new_run_script()
+
+    create_last_tseries_script()
 
 if __name__ == '__main__':
     main()

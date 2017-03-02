@@ -1,0 +1,176 @@
+#! /usr/bin/env python
+
+import os, sys, argparse
+import create_newcase
+
+import unittest
+
+svn = 'https://svn-ccsm-models.cgd.ucar.edu/cesm2/alpha/tags/cesm2_0_alpha06d'
+version = svn.split('/')[-1]
+cdir = os.getcwd()
+cesmdir = os.getcwd()+'/../../../'
+cesm_code_base = cesmdir+'/'+version
+new_case = './create_newcase  -case /glade/scratch/'+os.environ['USER']+'/cylc_testing/test_setup.f09_g16.B1850 -res f09_g16 -compset B1850'
+nc_split = new_case.split(' ')
+for i in range(0,len(nc_split)):
+    if '-case' in nc_split[i]:
+        case_root = nc_split[i+1]
+
+class TestCylc(unittest.TestCase):
+
+    def __init__(self, testname):
+   
+        super(TestCylc,self).__init__(testname)
+        _LIBDIR = os.path.join(cesm_code_base+'/cime',"scripts", "Tools")
+        sys.path.append(_LIBDIR)
+        sys.path.append(cdir+'/../')
+        os.chdir(case_root+'/postprocess')
+
+        import env_cylc
+        self.env = env_cylc.get_env(debug=True)
+        self.env['email'] = 'foo@bar'
+
+    def test_suiteFile(self):
+        
+        import filecmp
+        import toolTemplate
+        import graph
+        import cylc_template
+
+        os.chdir(case_root)
+
+        keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'atm_averages', 'atm_diagnostics',
+            'ocn_averages', 'ocn_diagnostics', 'lnd_averages', 'lnd_diagnostics', 'ice_averages', 'ice_diagnostics']
+
+        template = {}
+        for tool in keys:
+            template[tool] = toolTemplate.toolTemplate(tool, self.env)
+        for tool in keys:
+            toolTemplate.align_dates(template['case_run'].specs, template[tool].specs, tool)
+
+        g = graph.create_graph(keys,template)
+
+        cylc_template.create_cylc_input(g, self.env, 'suite.rc')
+
+        self.assertTrue(filecmp.cmp(cdir+'/orig_suite.rc', 'suite.rc'))
+
+
+    def test_cimeEnv(self):
+
+        os.chdir(case_root+'/postprocess')
+
+        self.assertEqual(self.env['RESUBMIT'], '10')
+	self.assertEqual(self.env['RUNDIR'], '/glade/scratch/mickelso/test_setup.f09_g16.B1850/run')
+	self.assertEqual(self.env['RUN_STARTDATE'], '0001-01-01')
+	self.assertEqual(self.env['STOP_N'], '10')
+	self.assertEqual(self.env['STOP_OPTION'], 'nyears')
+	self.assertEqual(self.env['DOUT_S'], 'TRUE')
+	self.assertEqual(self.env['DOUT_L_MS'], 'FALSE')
+	self.assertEqual(self.env['CASEROOT'], '/glade/scratch/mickelso/cylc_testing/test_setup.f09_g16.B1850')
+	self.assertEqual(self.env['GENERATE_TIMESERIES'], 'FALSE')
+	self.assertEqual(self.env['TIMESERIES_TPER'], 'year')
+	self.assertEqual(self.env['TIMESERIES_N'], '10')
+	self.assertEqual(self.env['TIMESERIES_RESUBMIT'], '1')
+	self.assertEqual(self.env['GENERATE_AVGS_ATM'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_DIAGS_ATM'], 'FALSE')
+	self.assertEqual(self.env['ATMDIAG_test_first_yr'], '5')
+	self.assertEqual(self.env['ATMDIAG_test_nyrs'], '20')
+	self.assertEqual(self.env['ATMDIAG_TEST_TIMESERIES'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_AVGS_OCN'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_DIAGS_OCN'], 'FALSE')
+	self.assertEqual(self.env['OCNDIAG_YEAR0'], '10')
+	self.assertEqual(self.env['OCNDIAG_YEAR1'], '30')
+	self.assertEqual(self.env['OCNDIAG_TSERIES_YEAR0'], '10')
+	self.assertEqual(self.env['OCNDIAG_TSERIES_YEAR1'], '30')
+	self.assertEqual(self.env['OCNDIAG_MODELCASE_INPUT_TSERIES'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_AVGS_LND'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_DIAGS_LND'], 'FALSE')
+	self.assertEqual(self.env['LNDDIAG_clim_first_yr_1'], '40')
+	self.assertEqual(self.env['LNDDIAG_clim_num_yrs_1'], '20')
+	self.assertEqual(self.env['LNDDIAG_trends_first_yr_1'], '40')
+	self.assertEqual(self.env['LNDDIAG_trends_num_yrs_1'], '20')
+	self.assertEqual(self.env['LNDDIAG_CASE1_TIMESERIES'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_AVGS_ICE'], 'FALSE')
+	self.assertEqual(self.env['GENERATE_DIAGS_ICE'], 'FALSE')
+	self.assertEqual(self.env['ICEDIAG_BEGYR_DIFF'], '40')
+	self.assertEqual(self.env['ICEDIAG_ENDYR_DIFF'], '65')
+	self.assertEqual(self.env['ICEDIAG_DIFF_TIMESERIES'], 'FALSE')
+        directives = {'case_run': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002']}
+        print directives
+        print self.env['directives']
+	self.assertEqual(self.env['directives'], directives)
+
+def test_setup(download):
+
+    if download:
+	os.chdir('../../../')
+
+	print '############################################'
+	print ''
+	print '   Get CESM version'
+	print ''
+	print '############################################'
+	print ''
+	# Get CESM version
+	os.system('svn co '+svn)
+
+	# cd into CESM version
+	os.chdir(cesm_code_base)
+
+
+	print '############################################'
+	print ''
+	print '   Create CESM Postprocessing'
+	print ''
+	print '############################################'
+	print ''
+	# get the postprocessing
+	os.system('git clone https://github.com/NCAR/CESM_postprocessing postprocessing')
+
+	# set up postprocessing
+	os.chdir(cesm_code_base+'/postprocessing')
+	os.system('./create_python_env -machine yellowstone')
+
+    print '############################################'
+    print ''
+    print '   Create CESM Case'
+    print ''
+    print '############################################'
+    print ''
+    # Create a CESM case
+    os.chdir(cdir)
+    create_newcase.create_cesm_case(cesm_code_base, new_case)
+
+
+def parseArgs(argv = None):
+
+    desc = 'Test suite for the CESM/Cylc Workflow'
+
+    parser = argparse.ArgumentParser(prog='CESM_Cylc_setup',
+                                     description=desc)
+
+    parser.add_argument('-d','--download',default=None, type=str,
+                        help='download cesm code and postporcessing', required=False)
+
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+# Parse args
+    args = parseArgs(argv)
+    if args.download != None:
+        d = True
+    else:
+        d = False
+# Setup the Tests
+    test_setup(d)
+# Run Unit Tests
+    suite = unittest.TestSuite()
+    suite.addTest(TestCylc('test_cimeEnv'))
+    suite.addTest(TestCylc('test_suiteFile'))
+    unittest.TextTestRunner(verbosity=5).run(suite)
+
+
+if __name__ == '__main__':
+    main()
+
