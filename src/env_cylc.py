@@ -116,8 +116,7 @@ class EnvCylc():
                
          
 
-    def get_env(self, debug):
-        my_case = os.getcwd() + '/../'
+    def get_env(self, my_case, debug):
         
         case = Case(my_case, read_only=False)
         
@@ -216,40 +215,45 @@ class EnvCylc():
                 user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
         case.set_value("RUN_WITH_SUBMIT", True)
        
-        pp_dir = my_case+'/postprocess/'
+        if os.path.isdir(my_case+'/postprocess/'):
+            pp_dir = my_case+'/postprocess/'
+
+            os.chdir(pp_dir)
    
-        self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
-        self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
-        self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],
+            self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
+            self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
+            self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],
                                                                     self.env['STOP_N'],self.env['STOP_OPTION'])
  
-        self.env['GENERATE_AVGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ATM', shell=True)
-        self.env['GENERATE_DIAGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ATM', shell=True)
-        self.env['ATMDIAG_test_first_yr'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_first_yr', shell=True)
-        self.env['ATMDIAG_test_nyrs'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_nyrs', shell=True)
-        self.env['ATMDIAG_TEST_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_TEST_TIMESERIES', shell=True)
+            self.env['GENERATE_AVGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ATM', shell=True)
+            self.env['GENERATE_DIAGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ATM', shell=True)
+            self.env['ATMDIAG_test_first_yr'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_first_yr', shell=True)
+            self.env['ATMDIAG_test_nyrs'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_nyrs', shell=True)
+            self.env['ATMDIAG_TEST_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_TEST_TIMESERIES', shell=True)
 
-        self.env['GENERATE_AVGS_OCN'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_OCN', shell=True)
-        self.env['GENERATE_DIAGS_OCN'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_OCN', shell=True)
-        self.env['OCNDIAG_YEAR0'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_YEAR0', shell=True)
-        self.env['OCNDIAG_YEAR1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_YEAR1', shell=True)
-        self.env['OCNDIAG_TSERIES_YEAR0'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_TSERIES_YEAR0', shell=True)
-        self.env['OCNDIAG_TSERIES_YEAR1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_TSERIES_YEAR1', shell=True)
-        self.env['OCNDIAG_MODELCASE_INPUT_TSERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_MODELCASE_INPUT_TSERIES', shell=True)
+            self.env['GENERATE_AVGS_OCN'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_OCN', shell=True)
+            self.env['GENERATE_DIAGS_OCN'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_OCN', shell=True)
+            self.env['OCNDIAG_YEAR0'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_YEAR0', shell=True)
+            self.env['OCNDIAG_YEAR1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_YEAR1', shell=True)
+            self.env['OCNDIAG_TSERIES_YEAR0'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_TSERIES_YEAR0', shell=True)
+            self.env['OCNDIAG_TSERIES_YEAR1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_TSERIES_YEAR1', shell=True)
+            self.env['OCNDIAG_MODELCASE_INPUT_TSERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get OCNDIAG_MODELCASE_INPUT_TSERIES', shell=True)
    
-        self.env['GENERATE_AVGS_LND'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_LND', shell=True)
-        self.env['GENERATE_DIAGS_LND'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_LND', shell=True)
-        self.env['LNDDIAG_clim_first_yr_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_clim_first_yr_1', shell=True)
-        self.env['LNDDIAG_clim_num_yrs_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_clim_num_yrs_1', shell=True)
-        self.env['LNDDIAG_trends_first_yr_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_trends_first_yr_1', shell=True)
-        self.env['LNDDIAG_trends_num_yrs_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_trends_num_yrs_1', shell=True)
-        self.env['LNDDIAG_CASE1_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_CASE1_TIMESERIES', shell=True)
+            self.env['GENERATE_AVGS_LND'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_LND', shell=True)
+            self.env['GENERATE_DIAGS_LND'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_LND', shell=True)
+            self.env['LNDDIAG_clim_first_yr_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_clim_first_yr_1', shell=True)
+            self.env['LNDDIAG_clim_num_yrs_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_clim_num_yrs_1', shell=True)
+            self.env['LNDDIAG_trends_first_yr_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_trends_first_yr_1', shell=True)
+            self.env['LNDDIAG_trends_num_yrs_1'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_trends_num_yrs_1', shell=True)
+            self.env['LNDDIAG_CASE1_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get LNDDIAG_CASE1_TIMESERIES', shell=True)
    
-        self.env['GENERATE_AVGS_ICE'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ICE', shell=True)
-        self.env['GENERATE_DIAGS_ICE'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ICE', shell=True)
-        self.env['ICEDIAG_BEGYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_DIFF', shell=True)
-        self.env['ICEDIAG_ENDYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_DIFF', shell=True)
-        self.env['ICEDIAG_DIFF_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_DIFF_TIMESERIES', shell=True)
+            self.env['GENERATE_AVGS_ICE'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ICE', shell=True)
+            self.env['GENERATE_DIAGS_ICE'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ICE', shell=True)
+            self.env['ICEDIAG_BEGYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_DIFF', shell=True)
+            self.env['ICEDIAG_ENDYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_DIFF', shell=True)
+            self.env['ICEDIAG_DIFF_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_DIFF_TIMESERIES', shell=True)
+
+        os.chdir(cwd)
 
         # Capitalize all true false values
         for k,v in self.env.iteritems():
@@ -262,9 +266,9 @@ class EnvCylc():
 
         return self.env        
 
-def get_env(debug=False):
+def get_env(case_dir, debug=False):
     cylc = EnvCylc()
-    env = cylc.get_env(debug)
+    env = cylc.get_env(case_dir, debug)
     return env
 #for k in env.keys():
 #    print k,': ',env[k]

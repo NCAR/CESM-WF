@@ -1,3 +1,5 @@
+import os
+
 # The run commands to run each of the tasks
 commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
             'timeseries': 'postprocess/timeseries', 
@@ -8,10 +10,17 @@ commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', '
             'ice_averages': 'postprocess/ice_averages', 'ice_diagnostics': 'postprocess/ice_diagnostics'}
 
 
-def create_cylc_input(graph, env, fn):
+def create_cylc_input(graph, env, path):
 
     cr = env['CASEROOT']
+
+    # Make suite directory if it does not exist
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    fn = path+'/suite.rc'
     f = open(fn, 'w')
+    print 'WRITING ',fn
     
     # add header
     f.write('title = '+env['CASE']+' workflow \n'+
@@ -72,14 +81,6 @@ def setup_suite(path, suite_name, image=None):
     import os
     from shutil import copyfile
 
-    # Make suite directory if it does not exist
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    # Copy the suite file over
-    cwd = os.getcwd() 
-    copyfile(cwd+'/suite.rc', path+'/suite.rc') 
-
     # Register the suite
     cmd = 'cylc register '+suite_name+' '+path  
     os.system(cmd)
@@ -91,6 +92,6 @@ def setup_suite(path, suite_name, image=None):
     if (image):
        # Show a graph
        suffix = image.split('.')[-1]
-       cmd = 'cylc graph -O '+image+' --output-format='+suffix+' '+suite_name
+       cmd = 'cylc graph -O '+path+'/'+image+' --output-format='+suffix+' '+suite_name
        os.system(cmd)
 

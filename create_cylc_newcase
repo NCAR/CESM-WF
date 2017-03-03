@@ -1,0 +1,210 @@
+#! /usr/bin/env python
+import os
+
+# Toggle to copy user name lists from the specified directory
+cp_namelist = False
+namelist_dir = ''
+
+# Toggle to build the case
+build = False 
+
+# Location of cesm code base
+cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06d-back/'
+
+# Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
+suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
+
+# Email address to have cylc send wf status updates as it runs
+email = os.environ['USER']+'@ucar.edu'
+
+# Add/Revove/Modify any of the CESM xml variables you would like to set or change
+cesm_xml={
+         'RESUBMIT': '2',
+         'STOP_N': '2',
+         'STOP_OPTION': 'nyears',
+         'DOUT_S': 'TRUE',
+         'GMAKE_J': '2'
+         }
+
+# Add/Revove/Modify any of the post processing xml variables you would like to set or change
+pp_xml={
+       'GENERATE_TIMESERIES': 'TRUE',
+       'GENERATE_AVGS_ATM': 'TRUE',
+       'GENERATE_DIAGS_ATM': 'TRUE',
+       'ATMDIAG_test_first_yr': '2',
+       'ATMDIAG_test_nyrs': '2',
+       'ATMDIAG_TEST_TIMESERIES': 'FALSE',
+       'GENERATE_AVGS_OCN': 'TRUE',
+       'GENERATE_DIAGS_OCN': 'TRUE',
+       'OCNDIAG_YEAR0': '2',
+       'OCNDIAG_YEAR1': '4',
+       'OCNDIAG_TSERIES_YEAR0': '2',
+       'OCNDIAG_TSERIES_YEAR1': '4',
+       'OCNDIAG_MODELCASE_INPUT_TSERIES': 'FALSE',
+       'GENERATE_AVGS_LND': 'TRUE',
+       'GENERATE_DIAGS_LND': 'TRUE',
+       'LNDDIAG_clim_first_yr_1': '2',
+       'LNDDIAG_clim_num_yrs_1': '2',
+       'LNDDIAG_trends_first_yr_1': '2',
+       'LNDDIAG_trends_num_yrs_1': '2',
+       'LNDDIAG_CASE1_TIMESERIES': 'FALSE',
+       'GENERATE_AVGS_ICE': 'TRUE',
+       'GENERATE_DIAGS_ICE': 'TRUE',
+       'ICEDIAG_BEGYR_DIFF': '2',
+       'ICEDIAG_ENDYR_DIFF': '4',
+       'ICEDIAG_BEGYR_CONT': '2',
+       'ICEDIAG_ENDYR_CONT': '4',
+       'ICEDIAG_DIFF_TIMESERIES': 'FALSE',
+       'ICEDIAG_YRS_TO_AVG': '2'
+       }
+
+
+#############################################################################
+#
+# Do not make any changes below this line
+#
+#############################################################################
+import os, sys
+
+cdir = os.getcwd()
+print '############################################'
+print ''
+print '   Create CESM Case'
+print ''
+print '############################################'
+print ''
+os.chdir(cesm_code_base+'/cime/scripts/')
+new_case = ' '.join(sys.argv)
+new_case = new_case.replace(os.path.basename(__file__),'create_newcase')
+err=os.system(new_case)
+if err!=0:
+    print '\033[91m','Error: Failed to create new CESM case.','\033[0m' 
+    print '\033[91m','Tried running: ',new_case,'\033[0m' 
+    sys.exit()
+for i in range(0, len(sys.argv)):
+    if '-case' in sys.argv[i]:
+        case_root = sys.argv[i+1]
+os.chdir(case_root)
+
+
+if os.path.isdir(cesm_code_base+'/postprocessing/'):
+    print '############################################'
+    print ''
+    print '   Create CESM Postprocessing'
+    print ''
+    print '############################################'
+    print ''
+    # Save old values
+    old_os_path = os.environ['PATH']
+    old_sys_path = list(sys.path)
+    old_sys_prefix = sys.prefix
+    os.environ['POSTPROCESS_PATH'] = cesm_code_base+'/postprocessing/' 
+    activate_file = os.environ['POSTPROCESS_PATH']+'/cesm-env2/bin/activate_this.py'
+    execfile(activate_file, dict(__file__=activate_file))
+    err=os.system('create_postprocess -caseroot '+case_root)
+    if err!=0:
+        print '\033[91m','Error: Failed to create post processing','\033[0m'                            
+        print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
+        sys.exit()
+    # Get old values back
+    os.environ['PATH'] = old_os_path
+    sys.prefix = old_sys_prefix
+    sys.path[:0] = old_sys_path
+else:
+    print '\033[91m','Warning: Cannot add postprocessing to Cylc workflow because the package cannot be found.','\033[0m'
+    print '\033[91m','Execting: ',cesm_code_base+'/postprocessing/','\033[0m'
+
+
+print '############################################'
+print ''
+print '   Set XML Variables'
+print ''
+print '############################################'
+print ''
+for k,v in cesm_xml.iteritems():
+    print 'Setting ',k,' to ',v
+    err=os.system('./xmlchange '+k+'='+v)
+    if err!=0:
+        print '\033[91m','Error: Failed to change an xml variable','\033[0m'
+        print '\033[91m','Tried running: ','./xmlchange '+k+'='+v,'\033[0m'
+        sys.exit()
+if os.path.isdir(case_root+'/postprocess/'):
+    os.chdir(case_root+'/postprocess/')
+    for k,v in pp_xml.iteritems():
+        print 'Setting ',k,' to ',v
+        err=os.system('./pp_config --set '+k+'='+v)
+        if err!=0:
+            print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+            print '\033[91m','Tried running: ','./pp_config --set '+k+'='+v,'\033[0m'
+            sys.exit()
+
+if cp_namelist == True or cp_namelist == 'TRUE' or cp_namelist == 'true':
+    print '############################################'
+    print ''
+    print '   Copy user_namelists'
+    print ''
+    print '############################################'
+    print ''
+    os.chdir(case_root)
+    for f in glob.glob(namelist_dir+'/user_nl_*'):
+        fn = os.path.basename(f)
+        shutil.copyfile(f,case_root+'/'+fn)
+        print 'Copied: ', f, ' to ', case_root+'/'+fn
+    err=os.system('./preview_namelists')
+    if err!=0:
+        print '\033[91m','Error: Failed in call to preview_namelist','\033[0m'
+        sys.exit() 
+
+print '############################################'
+print ''
+print '   Run case.setup'
+print ''
+print '############################################'
+print ''
+os.chdir(case_root)
+err=os.system('./case.setup')
+if err!=0:
+    print '\033[91m','Error: Failed in call to case.setup','\033[0m'
+    sys.exit()
+
+if build == True or build == 'TRUE' or build == 'true':
+    print '############################################'
+    print ''
+    print '   Run case.build'
+    print ''
+    print '############################################'
+    print ''
+    os.chdir(case_root)
+    err=os.system('./case.build')
+    if err!=0:
+        print '\033[91m','Error: Failed in call to case.build','\033[0m'
+        sys.exit()
+
+print '############################################'
+print ''
+print '   Setup Cylc Automation'
+print ''
+print '############################################'
+print ''
+os.chdir(cdir+'/src/')
+case_name = os.path.basename(os.path.normpath(case_root))
+err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email)
+
+os.chdir(cdir)
+
+print '##########################################################################'
+print ''
+print '   New CESM case created with Post Processing and Cylc Suite Enabled in'
+print '     '+case_root
+print '  '
+print '   Next steps: '
+if build == False or build == 'FALSE' or build == 'false':
+    print '               - build the case'
+print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name+'/workflow.png'
+print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
+print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email
+print '               - execute: gcylc '+case_name+'.suite'
+print ''
+print '#########################################################################'
+print ''
+
