@@ -3,7 +3,7 @@
 
 def create_cesm_case(cesm_code_base, new_case):
 
-    email = 'mickelso@ucar.edu'
+    email = os.environ['USER']+'@ucar.edu'
 
     cesm_xml={
 	     'RESUBMIT': '10',

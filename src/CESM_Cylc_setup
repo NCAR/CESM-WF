@@ -19,6 +19,8 @@ def parseArgs(argv = None):
                         help='Path to output Cylc Suite.  It will be create if it does not exist.', required=True)
     parser.add_argument('-s','--suite',default=None, type=str,
                         help='Name of the ioutput Cylc Suite.', required=True)
+    parser.add_argument('-d','--casedir',default=None, type=str,
+                        help='Path to CESM caseroot.', required=True)
 
     parser.add_argument('-g','--graph',default=None, type=str,
                         help='Name of output graph image.', required=False) 
@@ -27,9 +29,9 @@ def parseArgs(argv = None):
     return parser.parse_args(argv)
 
 
-def create_new_run_script():
-    f_new = open('../case.run.cylc','w')
-    f_old = open('../case.run','r')
+def create_new_run_script(casedir):
+    f_new = open(casedir+'/case.run.cylc','w')
+    f_old = open(casedir+'/case.run','r')
     for line in f_old:
         if 'caseroot = parse_command_line' in line:
             f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
@@ -38,13 +40,13 @@ def create_new_run_script():
             f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
     f_new.close()
     f_old.close()
-    st = os.stat('../case.run.cylc')
-    os.chmod('../case.run.cylc', st.st_mode | stat.S_IEXEC)
+    st = os.stat(casedir+'/case.run.cylc')
+    os.chmod(casedir+'/case.run.cylc', st.st_mode | stat.S_IEXEC)
 
 
-def create_last_tseries_script():
-    f_new = open('../postprocess/timeseriesL','w')
-    f_old = open('../postprocess/timeseries','r')
+def create_last_tseries_script(casedir):
+    f_new = open(casedir+'/postprocess/timeseriesL','w')
+    f_old = open(casedir+'/postprocess/timeseries','r')
     for line in f_old:
         if '--completechunk' in line:
             new_line = line.replace('--completechunk 1', '--completechunk 0')
@@ -53,8 +55,8 @@ def create_last_tseries_script():
             f_new.write(line)
     f_new.close()
     f_old.close()
-    st = os.stat('../postprocess/timeseriesL')
-    os.chmod('../postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
+    st = os.stat(casedir+'/postprocess/timeseriesL')
+    os.chmod(casedir+'/postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
 
 
 def main(argv=None):
@@ -65,7 +67,7 @@ def main(argv=None):
     sys.path.append(_LIBDIR)
 
     import env_cylc
-    env = env_cylc.get_env()
+    env = env_cylc.get_env(args.casedir)
 
     if args.email != None:
         env['email'] = args.email
@@ -122,13 +124,13 @@ def main(argv=None):
 
     g = graph.create_graph(keys,template)
 
-    cylc_template.create_cylc_input(g, env, 'suite.rc')
+    cylc_template.create_cylc_input(g, env, args.path)
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 
-    create_new_run_script()
+    create_new_run_script(args.casedir)
 
-    create_last_tseries_script()
+    create_last_tseries_script(args.casedir)
 
 if __name__ == '__main__':
     main()
