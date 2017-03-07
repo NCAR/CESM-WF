@@ -1,5 +1,11 @@
 #! /usr/bin/env python
-import os
+import os, sys
+
+#############################################################################
+#
+# User Modify Section
+#
+#############################################################################
 
 # Toggle to copy user name lists from the specified directory
 cp_namelist = False
@@ -64,7 +70,6 @@ pp_xml={
 # Do not make any changes below this line
 #
 #############################################################################
-import os, sys
 
 cdir = os.getcwd()
 print '############################################'

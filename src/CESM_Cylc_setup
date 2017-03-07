@@ -26,37 +26,66 @@ def parseArgs(argv = None):
                         help='Name of output graph image.', required=False) 
     parser.add_argument('-e','--email',default=None, type=str,
                         help='Email address to send run updates to', required=False)
+    parser.add_argument('-1','--start',default=999, type=str,
+                        help='the start number of the first ensemble member', required=False)
+    parser.add_argument('-2','--end',default=999, type=str,
+                        help='the end number of the last ensemble member', required=False)
     return parser.parse_args(argv)
 
 
-def create_new_run_script(casedir):
-    f_new = open(casedir+'/case.run.cylc','w')
-    f_old = open(casedir+'/case.run','r')
-    for line in f_old:
-        if 'caseroot = parse_command_line' in line:
-            f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
-        f_new.write(line)
-        if 'success = case_run(case)' in line:
-            f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
-    f_new.close()
-    f_old.close()
-    st = os.stat(casedir+'/case.run.cylc')
-    os.chmod(casedir+'/case.run.cylc', st.st_mode | stat.S_IEXEC)
+def create_new_run_script(ensemble_basename, start, end):
 
+    cdir = os.getcwd()
+    
+    for n in range(int(start),int(end)+1):
 
-def create_last_tseries_script(casedir):
-    f_new = open(casedir+'/postprocess/timeseriesL','w')
-    f_old = open(casedir+'/postprocess/timeseries','r')
-    for line in f_old:
-        if '--completechunk' in line:
-            new_line = line.replace('--completechunk 1', '--completechunk 0')
-            f_new.write(new_line+'\n')
+        em = str(n).zfill(3)
+        if start==end:
+            casedir = ensemble_basename
         else:
+            casedir = ensemble_basename+'.'+em
+        os.chdir(casedir)
+        f_new = open(casedir+'/case.run.cylc','w')
+        f_old = open(casedir+'/case.run','r')
+        for line in f_old:
+            if 'caseroot = parse_command_line' in line:
+                f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
             f_new.write(line)
-    f_new.close()
-    f_old.close()
-    st = os.stat(casedir+'/postprocess/timeseriesL')
-    os.chmod(casedir+'/postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
+            if 'success = case_run(case)' in line:
+                f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
+        f_new.close()
+        f_old.close()
+        st = os.stat(casedir+'/case.run.cylc')
+        os.chmod(casedir+'/case.run.cylc', st.st_mode | stat.S_IEXEC)
+    os.chdir(cdir)
+
+
+def create_last_tseries_script(ensemble_basename, start, end):
+
+    cdir = os.getcwd()
+
+    for n in range(int(start),int(end)+1):
+
+        em = str(n).zfill(3)
+        if start==end:
+            casedir = ensemble_basename
+        else:
+            casedir = ensemble_basename+'.'+em
+        os.chdir(casedir)
+
+        f_new = open(casedir+'/postprocess/timeseriesL','w')
+        f_old = open(casedir+'/postprocess/timeseries','r')
+        for line in f_old:
+            if '--completechunk' in line:
+                new_line = line.replace('--completechunk 1', '--completechunk 0')
+                f_new.write(new_line+'\n')
+            else:
+                f_new.write(line)
+        f_new.close()
+        f_old.close()
+        st = os.stat(casedir+'/postprocess/timeseriesL')
+        os.chmod(casedir+'/postprocess/timeseriesL', st.st_mode | stat.S_IEXEC)
+    os.chdir(cdir)
 
 
 def main(argv=None):
@@ -67,7 +96,10 @@ def main(argv=None):
     sys.path.append(_LIBDIR)
 
     import env_cylc
-    env = env_cylc.get_env(args.casedir)
+    env = env_cylc.get_env(args.casedir+"."+args.start.zfill(3))
+    env['start'] = args.start
+    env['end'] = args.end
+    env['ensemble_root'] = args.casedir
 
     if args.email != None:
         env['email'] = args.email
@@ -128,9 +160,9 @@ def main(argv=None):
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 
-    create_new_run_script(args.casedir)
+    create_new_run_script(args.casedir, args.start, args.end)
 
-    create_last_tseries_script(args.casedir)
+    create_last_tseries_script(args.casedir, args.start, args.end)
 
 if __name__ == '__main__':
     main()
