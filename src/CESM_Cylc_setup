@@ -26,9 +26,9 @@ def parseArgs(argv = None):
                         help='Name of output graph image.', required=False) 
     parser.add_argument('-e','--email',default=None, type=str,
                         help='Email address to send run updates to', required=False)
-    parser.add_argument('-1','--start',default=999, type=str,
+    parser.add_argument('-1','--start',default="999", type=str,
                         help='the start number of the first ensemble member', required=False)
-    parser.add_argument('-2','--end',default=999, type=str,
+    parser.add_argument('-2','--end',default="999", type=str,
                         help='the end number of the last ensemble member', required=False)
     return parser.parse_args(argv)
 
@@ -96,7 +96,10 @@ def main(argv=None):
     sys.path.append(_LIBDIR)
 
     import env_cylc
-    env = env_cylc.get_env(args.casedir+"."+args.start.zfill(3))
+    if args.start != args.end:
+        env = env_cylc.get_env(args.casedir+"."+args.start.zfill(3))
+    else:
+        env = env_cylc.get_env(args.casedir)
     env['start'] = args.start
     env['end'] = args.end
     env['ensemble_root'] = args.casedir
