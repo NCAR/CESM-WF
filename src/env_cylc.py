@@ -129,8 +129,6 @@ class EnvCylc():
         batch_system = case.get_value("BATCH_SYSTEM")
         batch = Batch(batch_system=batch_system, machine=machine_name)
         env_batch = case.get_env("batch")
-        if debug is False:
-            os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
         
         directives = {}
@@ -183,7 +181,7 @@ class EnvCylc():
                 if len(d) == 2:
                     if ' ' not in d[0] and ' ' not in d[1]:
                         directives[job_].append(d[0]+' = '+d[1])
-
+        self.env['batch_type'] = env_batch.get_batch_system_type()
         self.env['directives'] = directives
         self.env['STOP_N'] = case.get_value("STOP_N")
         self.env['RESUBMIT'] = case.get_value("RESUBMIT")
