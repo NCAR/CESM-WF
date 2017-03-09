@@ -1,3 +1,5 @@
+import os
+
 # The run commands to run each of the tasks
 commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
             'timeseries': 'postprocess/timeseries', 
@@ -8,10 +10,28 @@ commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', '
             'ice_averages': 'postprocess/ice_averages', 'ice_diagnostics': 'postprocess/ice_diagnostics'}
 
 
-def create_cylc_input(graph, env, fn):
+def create_cylc_input(graph, env, path):
 
-    cr = env['CASEROOT']
+    if env['start'] != env['end']:
+        ensemble=True
+        cr = env['ensemble_root']
+    else:
+        cr = env['CASEROOT']
+        ensemble=False 
+
+    # Make suite directory if it does not exist
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    fn = path+'/suite.rc'
     f = open(fn, 'w')
+    print 'WRITING ',fn
+
+    if ensemble:
+        count = int(env['end'])-int(env['start'])+1 
+        f.write('#!Jinja2 \n'+
+            '{% set MEMBERS = '+ str(count) +' %} \n'+
+            'title = '+env['CASE']+' workflow \n') 
     
     # add header
     f.write('title = '+env['CASE']+' workflow \n'+
@@ -25,20 +45,36 @@ def create_cylc_input(graph, env, fn):
     f.write('[scheduling]\n'+
             '    [[dependencies]]\n'+
             '        graph = \"\"\"\n')
+    if ensemble:
+        f.write('        {% for I in range('+env['start']+', '+str(int(env['end'])+1)+') %}\n')
     for t in graph:
-            d = t.get_id()+' => '
+            if ensemble:
+                d = t.get_id()+'__{{I}} => ' 
+            else:
+                d = t.get_id()+' => '
             if len(t.depends) > 0:
                 for i in range(0,len(t.depends)):
-                    d = d + t.depends[i]
+                    if ensemble:
+                        d = d + t.depends[i]+'__{{I}}'
+                    else:
+                        d = d + t.depends[i]
                     if i < len(t.depends)-1:
                         d = d + ' & '           
                 f.write('                    '+d+'\n')
+    if ensemble:
+        f.write('        {% endfor %}\n')
     f.write('               \"\"\"\n')
 
     # add run time - REPLACE WITH REAL DIRECTIVES
     f.write('[runtime]\n'+
-            '    [[root]]\n'+
-            '        pre-script = \"cd '+cr+'\"\n')
+            '    [[root]]\n')
+    if ensemble:
+        f.write('        [[[environment]]]\n')
+        f.write('            MEMBERS = {{MEMBERS}}\n')
+        f.write('    {% for I in range('+env['start']+', '+str(int(env['end'])+1)+') %}\n')
+        f.write('    {% set j = I | pad (3,\'0\') %}\n') 
+    else:
+        f.write('        pre-script = \"cd '+cr+'\"\n')
     for t in graph:
         task = t.get_id()
         task_split = task.split('_')
@@ -49,10 +85,17 @@ def create_cylc_input(graph, env, fn):
             if 'archive' in task_split[2]:
                tool = tool + '_' + task_split[2] 
         #print tool
-        f.write('    [['+task+' ]]\n')
-        f.write('        script = '+cr+'/'+commands[tool]+'\n')
+        if ensemble:
+            f.write('    [['+task+'__{{I}} ]]\n')
+            f.write('    {% set d = \"'+cr+'.\" %}\n')
+            f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/'+commands[tool]+'\n')
+        else:
+            f.write('    [['+task+' ]]\n')
+            f.write('        script = '+cr+'/'+commands[tool]+'\n')
         f.write('        [[[job submission]]]\n'+
-                '                method = lsf\n'+
+                '                method = '+env['batch_type']+'\n'+
+                '        [[[job]]]\n'+
+                '                execution time limit = PT12H\n'+
                 '        [[[directives]]]\n')
         if tool == 'timeseriesL':
             for d in env['directives']['timeseries']:
@@ -64,21 +107,15 @@ def create_cylc_input(graph, env, fn):
                 '                started handler = cylc email-suite\n'+
                 '                succeeded handler = cylc email-suite\n'+
                 '                failed handler = cylc email-suite\n')
-            
+    if ensemble:
+        f.write('    {% endfor %}\n')            
+ 
 
 def setup_suite(path, suite_name, image=None):
 
     import subprocess
     import os
     from shutil import copyfile
-
-    # Make suite directory if it does not exist
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    # Copy the suite file over
-    cwd = os.getcwd() 
-    copyfile(cwd+'/suite.rc', path+'/suite.rc') 
 
     # Register the suite
     cmd = 'cylc register '+suite_name+' '+path  
@@ -91,6 +128,6 @@ def setup_suite(path, suite_name, image=None):
     if (image):
        # Show a graph
        suffix = image.split('.')[-1]
-       cmd = 'cylc graph -O '+image+' --output-format='+suffix+' '+suite_name
+       cmd = 'cylc graph -O '+path+'/'+image+' --output-format='+suffix+' '+suite_name
        os.system(cmd)
 

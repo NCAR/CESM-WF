@@ -248,7 +248,7 @@ class toolTemplate(object):
         if 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])  
+            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1  
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
@@ -277,7 +277,7 @@ class toolTemplate(object):
         if 'TRUE' in env['GENERATE_DIAGS_ATM']  and 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs']) 
+            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1 
             date_s = str(year)+'-01-01'
             date_queue = [date_s]
 
@@ -358,8 +358,8 @@ class toolTemplate(object):
         specs = {}
         if 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
             # Get the last year needed
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) 
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) 
+            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1'])+1 
+            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1'])+1 
             if climYear > trendYear:
                 year = climYear
                 firstyr = int(env['LNDDIAG_clim_first_yr_1'])
@@ -394,8 +394,8 @@ class toolTemplate(object):
         specs = {}
         if 'TRUE' in env['GENERATE_DIAGS_LND']  and 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
             # Get the last year needed 
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1']) 
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1']) 
+            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1'])+1 
+            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1'])+1 
             if climYear > trendYear:
                 year = climYear
                 firstyr = int(env['LNDDIAG_clim_first_yr_1'])
