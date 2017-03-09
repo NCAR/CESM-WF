@@ -129,8 +129,6 @@ class EnvCylc():
         batch_system = case.get_value("BATCH_SYSTEM")
         batch = Batch(batch_system=batch_system, machine=machine_name)
         env_batch = case.get_env("batch")
-        if debug is False:
-            os.system('./xmlchange RESUBMIT=0')
         os.chdir(cwd)
         
         directives = {}

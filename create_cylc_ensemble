@@ -33,7 +33,7 @@ cesm_xml={
          'STOP_N': '2',
          'STOP_OPTION': 'nyears',
          'DOUT_S': 'TRUE',
-         'GMAKE_J': '2'
+         #'GMAKE_J': '2'
          }
 
 # Add/Revove/Modify any of the post processing xml variables you would like to set or change
@@ -226,7 +226,7 @@ if build == False or build == 'FALSE' or build == 'false':
 print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png'
 print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
 print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email
-print '               - execute: gcylc '+case_name+'.suite'
+print '               - execute: gcylc '+case_name_base+'.'+uid+'.suite'
 print ''
 print '#########################################################################'
 print ''
