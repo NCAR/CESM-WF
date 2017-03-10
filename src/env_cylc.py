@@ -108,10 +108,10 @@ class EnvCylc():
         else:
             ts = ts_n
             cesm = stop_n
-        if ts%cesm > 0:
-            freq = (ts/cesm)+1
+        if int(ts)%int(cesm) > 0:
+            freq = (int(ts)/int(cesm))+1
         else:
-            freq = (ts/cesm)
+            freq = (int(ts)/int(cesm))
         return freq  
                
          
@@ -181,6 +181,7 @@ class EnvCylc():
                 if len(d) == 2:
                     if ' ' not in d[0] and ' ' not in d[1]:
                         directives[job_].append(d[0]+' = '+d[1])
+
         self.env['batch_type'] = env_batch.get_batch_system_type()
         self.env['directives'] = directives
         self.env['STOP_N'] = case.get_value("STOP_N")
@@ -217,7 +218,29 @@ class EnvCylc():
             pp_dir = my_case+'/postprocess/'
 
             os.chdir(pp_dir)
-   
+  
+            # get pp directives
+            comps = ['atm', 'ocn', 'lnd', 'ice']
+            diag_t = ['diagnostics', 'averages']
+            for c in comps:
+                for d in diag_t:
+                    job = c+"_"+d
+                    directives[job] = []
+                    output = subprocess.check_output('./pp_config --getbatch '+d+' --machine '+machine_name+' -comp '+c, shell=True)
+                    output_s = output.split('\n')
+                    for o in output_s:
+                        o_s = o.split()
+                        if len(o_s) > 1:
+                            directives[job].append(o_s[0]+' = '+o_s[1])
+            # get pp for timeseries
+            directives['timeseries']=[]
+            output = subprocess.check_output('./pp_config --getbatch timeseries --machine '+machine_name, shell=True)
+            output_s = output.split('\n')
+            for o in output_s:
+                o_s = o.split()
+                if len(o_s) > 1:
+                    directives['timeseries'].append(o_s[0]+' = '+o_s[1])
+ 
             self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
             self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
             self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],

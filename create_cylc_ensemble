@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import os, sys
+import os, sys, glob, shutil
 
 #############################################################################
 #
@@ -8,14 +8,14 @@ import os, sys
 #############################################################################
 
 # Toggle to copy user name lists from the specified directory
-cp_namelist = False
-namelist_dir = ''
+cp_namelist = False 
+namelist_root = ''
 
 # Toggle to build the case
 build = False 
 
 # Location of cesm code base
-cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06d-back/'
+cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06f/'
 
 # Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
@@ -167,7 +167,7 @@ for i in range(ensemble_start,ensemble_end+1):
         print '############################################'
         print ''
         os.chdir(case_root)
-        for f in glob.glob(namelist_dir+'/user_nl_*'):
+        for f in glob.glob(namelist_root+n+'/user_nl_*'):
             fn = os.path.basename(f)
             shutil.copyfile(f,case_root+'/'+fn)
             print 'Copied: ', f, ' to ', case_root+'/'+fn
