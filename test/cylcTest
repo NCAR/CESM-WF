@@ -5,7 +5,7 @@ import create_newcase
 
 import unittest
 
-svn = 'https://svn-ccsm-models.cgd.ucar.edu/cesm2/alpha/tags/cesm2_0_alpha06d'
+svn = 'https://svn-ccsm-models.cgd.ucar.edu/cesm2/alpha/tags/cesm2_0_alpha06g'
 version = svn.split('/')[-1]
 cdir = os.getcwd()
 cesmdir = os.getcwd()+'/../../../'
@@ -15,6 +15,8 @@ nc_split = new_case.split(' ')
 for i in range(0,len(nc_split)):
     if '-case' in nc_split[i]:
         case_root = nc_split[i+1]
+suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
+command = './create_newcase case /glade/scratch/'+os.environ['USER']+'/cylc_testing/cylc_testing.B1850.f09_g16 -res f09_g16 -compset B1850'
 
 class TestCylc(unittest.TestCase):
 
@@ -24,10 +26,11 @@ class TestCylc(unittest.TestCase):
         _LIBDIR = os.path.join(cesm_code_base+'/cime',"scripts", "Tools")
         sys.path.append(_LIBDIR)
         sys.path.append(cdir+'/../')
+        sys.path.append(cdir+'/../src/')
         os.chdir(case_root+'/postprocess')
 
         import env_cylc
-        self.env = env_cylc.get_env(debug=True)
+        self.env = env_cylc.get_env(case_root, debug=True)
         self.env['email'] = 'foo@bar'
 
     def test_suiteFile(self):
@@ -53,6 +56,21 @@ class TestCylc(unittest.TestCase):
         cylc_template.create_cylc_input(g, self.env, 'suite.rc')
 
         self.assertTrue(filecmp.cmp(cdir+'/orig_suite.rc', 'suite.rc'))
+
+    def test_single(self):
+
+        import create_cylc_newcase 
+
+        create_cylc_newcase.create(cesm_code_base, command=command)
+        self.assertTrue(filecmp.cmp(cdir+'/single-suite.rc', suite_location+'/cylc_testing.B1850.f09_g16/suite.rc'))
+
+    def test_ensemble(self):
+
+        print 'PATH: ',sys.path
+        import create_cylc_ensemble
+
+        create_cylc_ensemble.create(cesm_code_base, command=command)
+        self.assertTrue(filecmp.cmp(cdir+'/ensemble-suite.rc', suite_location+'/cylc_testing.B1850.f09_g16.1-3.suite.rc'))
 
 
     def test_cimeEnv(self):
@@ -95,9 +113,10 @@ class TestCylc(unittest.TestCase):
 	self.assertEqual(self.env['ICEDIAG_BEGYR_DIFF'], '40')
 	self.assertEqual(self.env['ICEDIAG_ENDYR_DIFF'], '65')
 	self.assertEqual(self.env['ICEDIAG_DIFF_TIMESERIES'], 'FALSE')
-        directives = {'case_run': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002']}
-        print directives
-        print self.env['directives']
+#        directives = {'case_run': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002']}
+        directives = {'ice_averages': ['-n = 120', '-R = "span[ptile=15]"', '-q = regular', '-a = poe', '-J = averages', '-W = 02:00', '-P = STDD0002'], 'lnd_averages': ['-n = 120', '-R = "span[ptile=15]"', '-q = regular', '-a = poe', '-J = averages', '-W = 02:00', '-P = STDD0002'], 'case_test': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'ocn_diagnostics': ['-n = 16', '-R = "span[ptile=4]"', '-q = geyser', '-a = poe', '-J = diagnostics', '-W = 02:00', '-P = STDD0002'], 'ice_diagnostics': ['-n = 4', '-R = "span[ptile=2]"', '-q = geyser', '-a = poe', '-J = diagnostics', '-W = 01:00', '-P = STDD0002'], 'lnd_diagnostics': ['-n = 12', '-R = "span[ptile=4]"', '-q = geyser', '-a = poe', '-J = diagnostics', '-W = 02:00', '-P = STDD0002'], 'case_lt_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'atm_diagnostics': ['-n = 16', '-R = "span[ptile=4]"', '-q = geyser', '-a = poe', '-J = diagnostics', '-W = 02:00', '-P = STDD0002'], 'case_st_archive': ['-n = 1', '-R = "span[ptile=4]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = caldera', '-W = 24:00', '-P = STDD0002'], 'atm_averages': ['-n = 120', '-R = "span[ptile=15]"', '-q = regular', '-a = poe', '-J = averages', '-W = 00:30', '-P = STDD0002'], 'timeseries': ['-n = 32', '-R = "span[ptile=4]"', '-q = geyser', '-a = poe', '-J = timeseries', '-W = 02:00', '-P = STDD0002'], 'case_run': ['-n = 690', '-R = "span[ptile=15]"', '-a = poe', '-o = cesm.stdout.%J', '-e = cesm.stderr.%J', '-q = regular', '-W = 12:00', '-P = STDD0002'], 'ocn_averages': ['-n = 120', '-R = "span[ptile=15]"', '-q = regular', '-a = poe', '-J = averages', '-W = 02:00', '-P = STDD0002']}
+#        print directives
+#        print self.env['directives']
 	self.assertEqual(self.env['directives'], directives)
 
 def test_setup(download):
@@ -168,6 +187,8 @@ def main(argv=None):
     suite = unittest.TestSuite()
     suite.addTest(TestCylc('test_cimeEnv'))
     suite.addTest(TestCylc('test_suiteFile'))
+    suite.addTest(TestCylc('test_single'))
+    suite.addTest(TestCylc('test_ensemble'))
     unittest.TextTestRunner(verbosity=5).run(suite)
 
 
