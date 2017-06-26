@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import os, sys, glob, shutil
-
+import distutils.dir_util
 
 #############################################################################
 #
@@ -11,6 +11,10 @@ import os, sys, glob, shutil
 # Toggle to copy user name lists from the specified directory
 cp_namelist = False
 namelist_dir = ''
+
+# Toggle to copy user Source Mods from the specified directory
+cp_sourceMods = False
+sourceMods_dir = ''
 
 # Toggle to build the case
 build = False 
@@ -102,7 +106,7 @@ def create(cesm_code_base, testing=True, command=None):
 	if '-case' in sys.argv[i]:
 	    case_root = sys.argv[i+1]
     os.chdir(case_root)
-
+    case_root = os.getcwd()
 
     if os.path.isfile(os.environ['POSTPROCESS_PATH']+'/cesm-env2/bin/activate_this.py'):
 	print '############################################'
@@ -171,6 +175,17 @@ def create(cesm_code_base, testing=True, command=None):
 	if err!=0:
 	    print '\033[91m','Error: Failed in call to preview_namelist','\033[0m'
 	    sys.exit() 
+
+    if cp_sourceMods == True or cp_sourceMods == 'TRUE' or cp_sourceMods == 'true':
+        print '############################################'
+        print ''
+        print '   Copy sourceMods'
+        print ''
+        print '############################################'
+        print ''
+        os.chdir(case_root)
+        distutils.dir_util.copy_tree(sourceMods_dir,case_root+'/SourceMods/')
+        print 'Copied: ', sourceMods_dir, ' to ', case_root+'/SourceMods/'
 
     print '############################################'
     print ''
