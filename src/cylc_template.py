@@ -92,9 +92,8 @@ def create_cylc_input(graph, env, path):
         else:
             f.write('    [['+task+' ]]\n')
             f.write('        script = '+cr+'/'+commands[tool]+'\n')
-        f.write('        [[[job submission]]]\n'+
+        f.write('        [[[job]]]\n'+
                 '                method = '+env['batch_type']+'\n'+
-                '        [[[job]]]\n'+
                 '                execution time limit = PT12H\n'+
                 '        [[[directives]]]\n')
         if tool == 'timeseriesL':
