@@ -1,4 +1,5 @@
 import os
+import json
 
 # The run commands to run each of the tasks
 commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
@@ -25,17 +26,27 @@ def create_cylc_input(graph, env, path):
 
     fn = path+'/suite.rc'
     f = open(fn, 'w')
+    tfn = path+'/tasklist.json'
+    members = {}
+    crf = os.path.basename(cr)
     print 'WRITING ',fn
 
     if ensemble:
         count = int(env['end'])-int(env['start'])+1 
         f.write('#!Jinja2 \n'+
             '{% set MEMBERS = '+ str(count) +' %} \n'+
-            'title = '+env['CASE']+' workflow \n') 
+            'title = '+crf+'_'+env['start']+'-'+env['end']+' workflow \n')
+    else:
+        f.write('title = '+crf+' workflow \n')
+
+    if ensemble:
+        for i in range(0,count):
+            members[crf+'.'+str(i+1).zfill(3)] = []
+    else:
+        members[crf] = []
     
     # add header
-    f.write('title = '+env['CASE']+' workflow \n'+
-            '[cylc]\n'+
+    f.write('[cylc]\n'+
             '    [[environment]]\n'+
             '        MAIL_ADDRESS='+env['email']+'\n'+
             '    [[event hooks]]\n'+
@@ -50,8 +61,11 @@ def create_cylc_input(graph, env, path):
     for t in graph:
             if ensemble:
                 d = t.get_id()+'__{{I}} => ' 
+                for i in range(0,count):
+                    members[crf+'.'+str(i+1).zfill(3)].append(t.get_id()+'__'+str(i+1))
             else:
                 d = t.get_id()+' => '
+                members[crf].append(t.get_id())
             if len(t.depends) > 0:
                 for i in range(0,len(t.depends)):
                     if ensemble:
@@ -61,6 +75,9 @@ def create_cylc_input(graph, env, path):
                     if i < len(t.depends)-1:
                         d = d + ' & '           
                 f.write('                    '+d+'\n')
+    with open (tfn, "w") as ts:
+        json.dump({crf:members}, ts, indent=4) 
+    ts.close()
     if ensemble:
         f.write('        {% endfor %}\n')
     f.write('               \"\"\"\n')
