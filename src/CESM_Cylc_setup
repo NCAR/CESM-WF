@@ -21,7 +21,9 @@ def parseArgs(argv = None):
                         help='Name of the ioutput Cylc Suite.', required=True)
     parser.add_argument('-d','--casedir',default=None, type=str,
                         help='Path to CESM caseroot.', required=True)
-
+    
+    parser.add_argument('-b','--build',default='False', type=str,
+                        help='Add CESM build', required=False)
     parser.add_argument('-g','--graph',default=None, type=str,
                         help='Name of output graph image.', required=False) 
     parser.add_argument('-e','--email',default=None, type=str,
@@ -106,6 +108,7 @@ def main(argv=None):
     env['start'] = args.start
     env['end'] = args.end
     env['ensemble_root'] = args.casedir
+    env['build'] = args.build
 
     if args.email != None:
         env['email'] = args.email

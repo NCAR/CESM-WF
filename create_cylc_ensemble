@@ -17,7 +17,7 @@ cp_sourceMods = False
 sourceMods_dir = ''
 
 # Toggle to build the case
-build = False 
+build = 'False' #True or False 
 
 # Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
@@ -31,11 +31,10 @@ ensemble_end = 3
 
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
 cesm_xml={
-         'RESUBMIT': '2',
+         'RESUBMIT': '4',
          'STOP_N': '2',
          'STOP_OPTION': 'nyears',
-         'DOUT_S': 'TRUE',
-         #'GMAKE_J': '2'
+         'DOUT_S': 'TRUE'
          }
 
 # Add/Revove/Modify any of the post processing xml variables you would like to set or change
@@ -73,7 +72,7 @@ pp_xml={
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06d/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06m/'
 
     create(cesm_code_base, testing=False)
 
@@ -216,18 +215,18 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '\033[91m','Error: Failed in call to case.setup','\033[0m'
 	    sys.exit()
 
-	if build == True or build == 'TRUE' or build == 'true':
-	    print '############################################'
-	    print ''
-	    print '   Run case.build '+n
-	    print ''
-	    print '############################################'
-	    print ''
-	    os.chdir(case_root)
-	    err=os.system('./case.build')
-	    if err!=0:
-		print '\033[91m','Error: Failed in call to case.build','\033[0m'
-		sys.exit()
+#	if build == True or build == 'TRUE' or build == 'true':
+#	    print '############################################'
+#	    print ''
+#	    print '   Run case.build '+n
+#	    print ''
+#	    print '############################################'
+#	    print ''
+#	    os.chdir(case_root)
+#	    err=os.system('./case.build')
+#	    if err!=0:
+#		print '\033[91m','Error: Failed in call to case.build','\033[0m'
+#		sys.exit()
 
     print '############################################'
     print ''
@@ -239,7 +238,7 @@ def create(cesm_code_base, testing=True, command=None):
     case_name = os.path.basename(os.path.normpath(first_case_root))
     case_name_base = case_name[:-4]
     uid = str(ensemble_start)+'-'+str(ensemble_end)
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email)
 
     os.chdir(cdir)
 
