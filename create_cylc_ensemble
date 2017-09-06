@@ -1,6 +1,7 @@
 #! /usr/bin/env python
-import os, sys, glob, shutil
+import os, sys, glob, shutil, subprocess
 import distutils.dir_util
+import json
 
 #############################################################################
 #
@@ -25,6 +26,9 @@ suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 # Email address to have cylc send wf status updates as it runs
 email = os.environ['USER']+'@ucar.edu'
 
+# TEMP UNTIL DB COMPLETE
+db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
+
 # Set ensemble start and finish
 ensemble_start = 1
 ensemble_end = 3
@@ -40,6 +44,9 @@ cesm_xml={
 # Add/Revove/Modify any of the post processing xml variables you would like to set or change
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
+       'STANDARDIZE_TIMESERIES': 'TRUE',
+       'STANDARDIZE_TIMESERIES': 'TRUE',
+       'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/',
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
        'ATMDIAG_test_first_yr': '2',
@@ -72,7 +79,7 @@ pp_xml={
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha06m/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha07c/'
 
     create(cesm_code_base, testing=False)
 
@@ -214,6 +221,38 @@ def create(cesm_code_base, testing=True, command=None):
 	if err!=0:
 	    print '\033[91m','Error: Failed in call to case.setup','\033[0m'
 	    sys.exit()
+
+        os.chdir(case_root+'/postprocess/')
+        conform = subprocess.check_output('./pp_config -value -caseroot '+case_root+'/postprocess/'+' --get STANDARDIZE_TIMESERIES', shell=True)
+        if 'TRUE' in conform:
+            print '############################################'
+            print ''
+            print '   Run iconform'
+            print ''
+            print '############################################'
+            print ''
+         
+            with open(db_file) as db:
+                db_info = json.load(db)
+            exp_name = db_info["experiment_id"]
+
+            conform_vars = {
+                'CONFORM_JSON_DIRECTORY': case_root+'/postprocess/',
+                'CONFORM_EXP_NAME': exp_name
+            }
+            for k,v in conform_vars.iteritems():
+                print 'Setting ',k,' to ',v
+                err=os.system('./pp_config --set '+k+'='+v)
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set '+k+'='+v,'\033[0m'
+                    sys.exit()
+
+            err=os.system('./iconform')
+            if err!=0:
+                print '\033[91m','Error: Failed in call to case.setup','\033[0m'
+                sys.exit()
+
 
 #	if build == True or build == 'TRUE' or build == 'true':
 #	    print '############################################'

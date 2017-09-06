@@ -25,6 +25,9 @@ class toolTemplate(object):
        
         elif (tool_type == 'timeseriesL'):
             specs = self.tseriesL_specs(env)
+
+        elif (tool_type == 'xconform'):
+            specs = self.xconform_specs(env)
  
         elif (tool_type == 'atm_averages'):
             specs = self.avg_atm_specs(env)
@@ -237,6 +240,22 @@ class toolTemplate(object):
             specs['dependancy'] = ''
         return specs
 
+
+    def xconform_specs(self, env):
+
+        specs = {}
+        if 'TRUE' in env['STANDARDIZE_TIMESERIES']:        
+            date_queue = []
+            date_queue.append(self.find_last(env))
+
+            dependancy = 'timeseriesL'
+           
+            specs['date_queue'] = date_queue
+            specs['dependancy'] = dependancy
+        else:
+            specs['date_queue'] = []
+            specs['dependancy'] = ''
+        return specs
 
 
     def  avg_atm_specs(self, env):

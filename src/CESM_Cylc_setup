@@ -127,6 +127,7 @@ def main(argv=None):
     print 'TIMESERIES_TPER: ', env['TIMESERIES_TPER']
     print 'TIMESERIES_N: ', env['TIMESERIES_N']
     print 'TIMESERIES_RESUBMIT: ', env['TIMESERIES_RESUBMIT']
+    print 'STANDARDIZE_TIMESERIES: ', env['STANDARDIZE_TIMESERIES']
     print 'GENERATE_AVGS_ATM: ', env['GENERATE_AVGS_ATM']
     print 'GENERATE_DIAGS_ATM: ', env['GENERATE_DIAGS_ATM']
     print 'ATMDIAG_test_first_yr: ', env['ATMDIAG_test_first_yr']
@@ -153,7 +154,7 @@ def main(argv=None):
     print 'ICEDIAG_DIFF_TIMESERIES: ', env['ICEDIAG_DIFF_TIMESERIES']
     print 'Directives: ',env['directives']
 
-    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'atm_averages', 'atm_diagnostics',
+    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'xconform', 'atm_averages', 'atm_diagnostics',
             'ocn_averages', 'ocn_diagnostics', 'lnd_averages', 'lnd_diagnostics', 'ice_averages', 'ice_diagnostics']
 
     template = {}
