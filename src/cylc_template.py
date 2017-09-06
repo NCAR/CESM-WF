@@ -1,7 +1,9 @@
 import os
+import json
 
 # The run commands to run each of the tasks
-commands = {'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
+commands = {'case_build': 'case.build', 'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
+            'xconform': 'postprocess/xconform',
             'timeseries': 'postprocess/timeseries', 
             'timeseriesL': 'postprocess/timeseriesL',
             'atm_averages': 'postprocess/atm_averages', 'atm_diagnostics': 'postprocess/atm_diagnostics',
@@ -25,17 +27,27 @@ def create_cylc_input(graph, env, path):
 
     fn = path+'/suite.rc'
     f = open(fn, 'w')
+    tfn = path+'/tasklist.json'
+    members = {}
+    crf = os.path.basename(cr)
     print 'WRITING ',fn
 
     if ensemble:
         count = int(env['end'])-int(env['start'])+1 
         f.write('#!Jinja2 \n'+
             '{% set MEMBERS = '+ str(count) +' %} \n'+
-            'title = '+env['CASE']+' workflow \n') 
+            'title = '+crf+'_'+env['start']+'-'+env['end']+' workflow \n')
+    else:
+        f.write('title = '+crf+' workflow \n')
+
+    if ensemble:
+        for i in range(0,count):
+            members[crf+'.'+str(i+1).zfill(3)] = []
+    else:
+        members[crf] = []
     
     # add header
-    f.write('title = '+env['CASE']+' workflow \n'+
-            '[cylc]\n'+
+    f.write('[cylc]\n'+
             '    [[environment]]\n'+
             '        MAIL_ADDRESS='+env['email']+'\n'+
             '    [[event hooks]]\n'+
@@ -47,20 +59,37 @@ def create_cylc_input(graph, env, path):
             '        graph = \"\"\"\n')
     if ensemble:
         f.write('        {% for I in range('+env['start']+', '+str(int(env['end'])+1)+') %}\n')
+    first = True
     for t in graph:
+        if first:
             if ensemble:
-                d = t.get_id()+'__{{I}} => ' 
+                if 'True' in env['build']:
+                    f.write('                    case_build__{{I}} => '+t.get_id()+'__{{I}} \n')                
             else:
-                d = t.get_id()+' => '
-            if len(t.depends) > 0:
-                for i in range(0,len(t.depends)):
-                    if ensemble:
-                        d = d + t.depends[i]+'__{{I}}'
-                    else:
-                        d = d + t.depends[i]
-                    if i < len(t.depends)-1:
-                        d = d + ' & '           
-                f.write('                    '+d+'\n')
+                if 'True' in env['build']:
+                    f.write('                    case_build  => '+t.get_id()+'\n')
+            first = False
+
+        if ensemble:
+            d = t.get_id()+'__{{I}} => ' 
+            for i in range(0,count):
+                members[crf+'.'+str(i+1).zfill(3)].append(t.get_id()+'__'+str(i+1))
+        else:
+            d = t.get_id()+' => '
+            members[crf].append(t.get_id())       
+ 
+        if len(t.depends) > 0:
+            for i in range(0,len(t.depends)):
+                if ensemble:
+                    d = d + t.depends[i]+'__{{I}}'
+                else:
+                    d = d + t.depends[i]
+                if i < len(t.depends)-1:
+                    d = d + ' & '           
+            f.write('                    '+d+'\n')
+    with open (tfn, "w") as ts:
+        json.dump({crf:members}, ts, indent=4) 
+    ts.close()
     if ensemble:
         f.write('        {% endfor %}\n')
     f.write('               \"\"\"\n')
@@ -75,6 +104,25 @@ def create_cylc_input(graph, env, path):
         f.write('    {% set j = I | pad (3,\'0\') %}\n') 
     else:
         f.write('        pre-script = \"cd '+cr+'\"\n')
+    if 'True' in env['build']:
+        if ensemble:
+            f.write('    [[case_build__{{I}} ]]\n')
+            f.write('    {% set d = \"'+cr+'.\" %}\n')
+            f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/case.build\n')
+        else:
+            f.write('    [[case_build]]\n')
+            f.write('        script = '+cr+'/case.build\n')
+        f.write('        [[[job]]]\n'+
+                '                method = '+env['batch_type']+'\n'+
+                '                execution time limit = PT12H\n'+
+                '        [[[directives]]]\n')
+        for d in env['directives']['case_st_archive']:
+                f.write('                '+d+'\n')
+        f.write('        [[[event hooks]]]\n'+
+                '                started handler = cylc email-suite\n'+
+                '                succeeded handler = cylc email-suite\n'+
+                '                failed handler = cylc email-suite\n')
+
     for t in graph:
         task = t.get_id()
         task_split = task.split('_')
@@ -92,9 +140,8 @@ def create_cylc_input(graph, env, path):
         else:
             f.write('    [['+task+' ]]\n')
             f.write('        script = '+cr+'/'+commands[tool]+'\n')
-        f.write('        [[[job submission]]]\n'+
+        f.write('        [[[job]]]\n'+
                 '                method = '+env['batch_type']+'\n'+
-                '        [[[job]]]\n'+
                 '                execution time limit = PT12H\n'+
                 '        [[[directives]]]\n')
         if tool == 'timeseriesL':

@@ -1,5 +1,4 @@
-#! /usr/bin/env python
-
+import os, sys
 
 def create_cesm_case(cesm_code_base, new_case):
 
@@ -49,7 +48,6 @@ def create_cesm_case(cesm_code_base, new_case):
     # Do not make any changes below this line
     #
     #############################################################################
-    import os, sys
 
     cdir = os.getcwd()
     print '############################################'
@@ -74,7 +72,6 @@ def create_cesm_case(cesm_code_base, new_case):
     print ''
     print '############################################'
     print ''
-    os.environ['POSTPROCESS_PATH'] = cesm_code_base+'/postprocessing/' 
     activate_file = os.environ['POSTPROCESS_PATH']+'/cesm-env2/bin/activate_this.py'
     execfile(activate_file, dict(__file__=activate_file))
     os.system('create_postprocess -caseroot '+case_root)

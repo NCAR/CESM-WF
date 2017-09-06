@@ -1,0 +1,363 @@
+#!Jinja2 
+{% set MEMBERS = 3 %} 
+title = newEnsemble3_test.B1850.f19_g16.001 workflow 
+title = newEnsemble3_test.B1850.f19_g16.001 workflow 
+[cylc]
+    [[environment]]
+        MAIL_ADDRESS=mickelso@ucar.edu
+    [[event hooks]]
+        shutdown handler = cylc email-suite
+[scheduling]
+    [[dependencies]]
+        graph = """
+        {% for I in range(1, 4) %}
+                    case_run_0003-01-01__{{I}} => case_st_archive_0003-01-01__{{I}}
+                    case_st_archive_0003-01-01__{{I}} => timeseries_0003-01-01__{{I}} & case_run_0005-01-01__{{I}}
+                    timeseries_0003-01-01__{{I}} => timeseries_0005-01-01__{{I}}
+                    case_run_0005-01-01__{{I}} => case_st_archive_0005-01-01__{{I}}
+                    case_st_archive_0005-01-01__{{I}} => timeseries_0005-01-01__{{I}} & ocn_averages_4-01-01__{{I}} & ice_averages_4-01-01__{{I}} & case_run_0007-01-01__{{I}}
+                    timeseries_0005-01-01__{{I}} => timeseriesL_0007-01-01__{{I}}
+                    ocn_averages_4-01-01__{{I}} => ocn_diagnostics_4-01-01__{{I}}
+                    ice_averages_4-01-01__{{I}} => ice_diagnostics_4-01-01__{{I}}
+                    case_run_0007-01-01__{{I}} => case_st_archive_0007-01-01__{{I}}
+                    case_st_archive_0007-01-01__{{I}} => timeseriesL_0007-01-01__{{I}} & atm_averages_5-01-01__{{I}} & lnd_averages_5-01-01__{{I}}
+                    atm_averages_5-01-01__{{I}} => atm_diagnostics_5-01-01__{{I}}
+                    lnd_averages_5-01-01__{{I}} => lnd_diagnostics_5-01-01__{{I}}
+        {% endfor %}
+               """
+[runtime]
+    [[root]]
+        [[[environment]]]
+            MEMBERS = {{MEMBERS}}
+    {% for I in range(1, 4) %}
+    {% set j = I | pad (3,'0') %}
+    [[case_run_0003-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0003-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[timeseries_0003-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/timeseries
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 32
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = timeseries
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0005-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0005-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[timeseries_0005-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/timeseries
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 32
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = timeseries
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[ocn_averages_4-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/ocn_averages
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 120
+                -R = "span[ptile=15]"
+                -q = regular
+                -a = poe
+                -J = averages
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[ocn_diagnostics_4-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/ocn_diagnostics
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 16
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = diagnostics
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[ice_averages_4-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/ice_averages
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 120
+                -R = "span[ptile=15]"
+                -q = regular
+                -a = poe
+                -J = averages
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[ice_diagnostics_4-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/ice_diagnostics
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 4
+                -R = "span[ptile=2]"
+                -q = geyser
+                -a = poe
+                -J = diagnostics
+                -W = 01:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_run_0007-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.run.cylc
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 690
+                -R = "span[ptile=15]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = regular
+                -W = 12:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[case_st_archive_0007-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/case.st_archive
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 1
+                -R = "span[ptile=4]"
+                -a = poe
+                -o = cesm.stdout.%J
+                -e = cesm.stderr.%J
+                -q = caldera
+                -W = 24:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[timeseriesL_0007-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/timeseriesL
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 32
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = timeseries
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[atm_averages_5-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/atm_averages
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 120
+                -R = "span[ptile=15]"
+                -q = regular
+                -a = poe
+                -J = averages
+                -W = 00:30
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[atm_diagnostics_5-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/atm_diagnostics
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 16
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = diagnostics
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[lnd_averages_5-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/lnd_averages
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 120
+                -R = "span[ptile=15]"
+                -q = regular
+                -a = poe
+                -J = averages
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    [[lnd_diagnostics_5-01-01__{{I}} ]]
+    {% set d = "/glade/scratch/mickelso/cylc_testing/newEnsemble3_test.B1850.f19_g16." %}
+        script = cd {{d}}{{j}}; {{d}}{{j}}/postprocess/lnd_diagnostics
+        [[[job submission]]]
+                method = lsf
+        [[[job]]]
+                execution time limit = PT12H
+        [[[directives]]]
+                -n = 12
+                -R = "span[ptile=4]"
+                -q = geyser
+                -a = poe
+                -J = diagnostics
+                -W = 02:00
+                -P = STDD0002
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+    {% endfor %}

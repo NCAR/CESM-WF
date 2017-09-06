@@ -108,10 +108,10 @@ class EnvCylc():
         else:
             ts = ts_n
             cesm = stop_n
-        if ts%cesm > 0:
-            freq = (ts/cesm)+1
+        if int(ts)%int(cesm) > 0:
+            freq = (int(ts)/int(cesm))+1
         else:
-            freq = (ts/cesm)
+            freq = (int(ts)/int(cesm))
         return freq  
                
          
@@ -133,6 +133,7 @@ class EnvCylc():
         
         directives = {}
         
+        num_nodes = case.num_nodes
         bjobs = batch.get_batch_jobs()
         for job, _ in bjobs:
             job_ = str.replace(job,'.','_')
@@ -145,26 +146,31 @@ class EnvCylc():
                 env_mach_pes = case.get_env("mach_pes") 
                 task_count = env_mach_pes.get_total_tasks(models)
                 ptile = case.get_value("PES_PER_NODE")
+                self.num_nodes = case.num_nodes
+                self.thread_count = case.thread_count
             else:
                 ptile = 4                
+                self.num_nodes = 1
+                self.thread_count = 1
 
             self.ptile = ptile
             self.total_tasks = task_count
             self.tasks_per_node = ptile
-           
 
             queue = env_batch.select_best_queue(int(task_count),job)
             if queue is None:
                 queue = env_batch.select_best_queue(task_count,job)
             wall_time=None
-            wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
+            #wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
+            wall_time = env_batch.get_queue_specs(queue)[3] if wall_time is None else wall_time
             env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time, subgroup=job)
             env_batch.set_value("JOB_QUEUE", queue, subgroup=job)
 
             direct = ''
             ds = env_batch.get_batch_directives(case, job, raw=True)
             dss = ds.split('\n') 
-            for d in dss:  
+            for d in dss:
+                #direct = direct + transform_vars(d, case=case, subgroup=job)   
                 direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
 
             s = env_batch.get_submit_args(case, job)
@@ -179,7 +185,7 @@ class EnvCylc():
                 d = d.split(' ')
                 d=' '.join(d).split()
                 if len(d) == 2:
-                    if ' ' not in d[0] and ' ' not in d[1]:
+                    if ' ' not in d[0] and ' ' not in d[1] and 'walltime' not in d[1]:
                         directives[job_].append(d[0]+' = '+d[1])
         self.env['batch_type'] = env_batch.get_batch_system_type()
         self.env['directives'] = directives
@@ -217,12 +223,40 @@ class EnvCylc():
             pp_dir = my_case+'/postprocess/'
 
             os.chdir(pp_dir)
-   
+  
+            # get pp directives
+            comps = ['atm', 'ocn', 'lnd', 'ice']
+            diag_t = ['diagnostics', 'averages']
+            for c in comps:
+                for d in diag_t:
+                    job = c+"_"+d
+                    directives[job] = []
+                    output = subprocess.check_output('./pp_config --getbatch '+d+' --machine '+machine_name+' -comp '+c, shell=True)
+                    output_s = output.split('\n')
+                    for o in output_s:
+                        o_s = o.split()
+                        if len(o_s) > 1:
+                            if 'walltime' not in o_s[1]:
+                                directives[job].append(o_s[0]+' = '+o_s[1])
+            # get pp for timeseries and xconform
+            tools = ['xconform', 'timeseries']
+            for t in tools:
+                directives[t]=[]
+                output = subprocess.check_output('./pp_config --getbatch '+t+' --machine '+machine_name, shell=True)
+                output_s = output.split('\n')
+                for o in output_s:
+                    o_s = o.split()
+                    if len(o_s) > 1:
+                        if 'walltime' not in o_s[1]:
+                            directives[t].append(o_s[0]+' = '+o_s[1])
+ 
             self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
             self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
             self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],
                                                                     self.env['STOP_N'],self.env['STOP_OPTION'])
- 
+
+            self.env['STANDARDIZE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get STANDARDIZE_TIMESERIES', shell=True)
+   
             self.env['GENERATE_AVGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ATM', shell=True)
             self.env['GENERATE_DIAGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ATM', shell=True)
             self.env['ATMDIAG_test_first_yr'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_first_yr', shell=True)

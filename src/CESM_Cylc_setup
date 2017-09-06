@@ -21,7 +21,9 @@ def parseArgs(argv = None):
                         help='Name of the ioutput Cylc Suite.', required=True)
     parser.add_argument('-d','--casedir',default=None, type=str,
                         help='Path to CESM caseroot.', required=True)
-
+    
+    parser.add_argument('-b','--build',default='False', type=str,
+                        help='Add CESM build', required=False)
     parser.add_argument('-g','--graph',default=None, type=str,
                         help='Name of output graph image.', required=False) 
     parser.add_argument('-e','--email',default=None, type=str,
@@ -51,10 +53,10 @@ def create_new_run_script(ensemble_basename, start, end):
         f_new = open(casedir+'/case.run.cylc','w')
         f_old = open(casedir+'/case.run','r')
         for line in f_old:
-            if 'caseroot = parse_command_line' in line:
+            if 'parse_command_line' in line and 'caseroot' in line:
                 f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
             f_new.write(line)
-            if 'success = case_run(case)' in line:
+            if 'case_run' in line and 'success' in line:
                 f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
         f_new.close()
         f_old.close()
@@ -106,6 +108,7 @@ def main(argv=None):
     env['start'] = args.start
     env['end'] = args.end
     env['ensemble_root'] = args.casedir
+    env['build'] = args.build
 
     if args.email != None:
         env['email'] = args.email
@@ -124,6 +127,7 @@ def main(argv=None):
     print 'TIMESERIES_TPER: ', env['TIMESERIES_TPER']
     print 'TIMESERIES_N: ', env['TIMESERIES_N']
     print 'TIMESERIES_RESUBMIT: ', env['TIMESERIES_RESUBMIT']
+    print 'STANDARDIZE_TIMESERIES: ', env['STANDARDIZE_TIMESERIES']
     print 'GENERATE_AVGS_ATM: ', env['GENERATE_AVGS_ATM']
     print 'GENERATE_DIAGS_ATM: ', env['GENERATE_DIAGS_ATM']
     print 'ATMDIAG_test_first_yr: ', env['ATMDIAG_test_first_yr']
@@ -150,7 +154,7 @@ def main(argv=None):
     print 'ICEDIAG_DIFF_TIMESERIES: ', env['ICEDIAG_DIFF_TIMESERIES']
     print 'Directives: ',env['directives']
 
-    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'atm_averages', 'atm_diagnostics',
+    keys = ['case_run', 'case_st_archive', 'case_lt_archive', 'timeseries', 'timeseriesL', 'xconform', 'atm_averages', 'atm_diagnostics',
             'ocn_averages', 'ocn_diagnostics', 'lnd_averages', 'lnd_diagnostics', 'ice_averages', 'ice_diagnostics']
 
     template = {}
