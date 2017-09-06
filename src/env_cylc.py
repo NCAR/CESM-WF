@@ -238,21 +238,25 @@ class EnvCylc():
                         if len(o_s) > 1:
                             if 'walltime' not in o_s[1]:
                                 directives[job].append(o_s[0]+' = '+o_s[1])
-            # get pp for timeseries
-            directives['timeseries']=[]
-            output = subprocess.check_output('./pp_config --getbatch timeseries --machine '+machine_name, shell=True)
-            output_s = output.split('\n')
-            for o in output_s:
-                o_s = o.split()
-                if len(o_s) > 1:
-                    if 'walltime' not in o_s[1]:
-                        directives['timeseries'].append(o_s[0]+' = '+o_s[1])
+            # get pp for timeseries and xconform
+            tools = ['xconform', 'timeseries']
+            for t in tools:
+                directives[t]=[]
+                output = subprocess.check_output('./pp_config --getbatch '+t+' --machine '+machine_name, shell=True)
+                output_s = output.split('\n')
+                for o in output_s:
+                    o_s = o.split()
+                    if len(o_s) > 1:
+                        if 'walltime' not in o_s[1]:
+                            directives[t].append(o_s[0]+' = '+o_s[1])
  
             self.env['GENERATE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_TIMESERIES', shell=True)
             self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'] = self.get_tseries_info(pp_dir,self.env['STOP_N'],self.env['STOP_OPTION'])
             self.env['TIMESERIES_RESUBMIT'] = self.get_tseries_resubmit(self.env['TIMESERIES_TPER'],self.env['TIMESERIES_N'],
                                                                     self.env['STOP_N'],self.env['STOP_OPTION'])
- 
+
+            self.env['STANDARDIZE_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get STANDARDIZE_TIMESERIES', shell=True)
+   
             self.env['GENERATE_AVGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_AVGS_ATM', shell=True)
             self.env['GENERATE_DIAGS_ATM'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get GENERATE_DIAGS_ATM', shell=True)
             self.env['ATMDIAG_test_first_yr'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ATMDIAG_test_first_yr', shell=True)
