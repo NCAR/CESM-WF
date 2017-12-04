@@ -112,10 +112,24 @@ def create_cylc_input(graph, env, path):
         else:
             f.write('    [[case_build]]\n')
             f.write('        script = '+cr+'/case.build\n')
-        f.write('        [[[job]]]\n'+
-                '                method = '+env['batch_type']+'\n'+
-                '                execution time limit = PT12H\n'+
-                '        [[[directives]]]\n')
+        if 'cheyenne' in env['machine_name']:
+            if 'case_run' in task or 'case_st_archive' in task:
+                f.write('        [[[job]]]\n'+
+                    '                method = '+env['batch_type']+'\n'+
+                    '                execution time limit = PT12H\n'+
+                    '        [[[directives]]]\n')
+            else: 
+                f.write('        [[[job]]]\n'+
+                        '                method = slurm\n'+
+                        '                execution time limit = PT12H\n'+
+                        '        [[[directives]]]\n')
+            for d,i in enumerate(env['directives']['case_st_archive']):
+                if 'select' in d:
+                    env['directives']['case_st_archive'][i] = env['directives']['case_st_archive'][i]+',inception=login'
+        else:
+            f.write('        [[[job]]]\n'+
+                    '                method = '+env['batch_type']+'\n'+
+                    '        [[[directives]]]\n')
         for d in env['directives']['case_st_archive']:
                 f.write('                '+d+'\n')
         f.write('        [[[event hooks]]]\n'+
@@ -140,10 +154,23 @@ def create_cylc_input(graph, env, path):
         else:
             f.write('    [['+task+' ]]\n')
             f.write('        script = '+cr+'/'+commands[tool]+'\n')
-        f.write('        [[[job]]]\n'+
-                '                method = '+env['batch_type']+'\n'+
-                '                execution time limit = PT12H\n'+
-                '        [[[directives]]]\n')
+
+        if 'cheyenne' in env['machine_name']:
+            if 'case_run' in task or 'case_st_archive' in task:
+                f.write('        [[[job]]]\n'+
+                    '                method = '+env['batch_type']+'\n'+
+                    '                execution time limit = PT12H\n'+
+                    '        [[[directives]]]\n')
+            else:
+                f.write('        [[[job]]]\n'+
+                        '                method = slurm\n'+
+                        '        [[[directives]]]\n')
+
+        else:
+            f.write('        [[[job]]]\n'+
+                    '                method = '+env['batch_type']+'\n'+
+                    '        [[[directives]]]\n')
+
         if tool == 'timeseriesL':
             for d in env['directives']['timeseries']:
                 f.write('                '+d+'\n')

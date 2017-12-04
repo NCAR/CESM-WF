@@ -268,7 +268,7 @@ class toolTemplate(object):
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
             year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1  
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
@@ -297,7 +297,7 @@ class toolTemplate(object):
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
             # for the next year have been calculated). 
             year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1 
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
@@ -327,7 +327,7 @@ class toolTemplate(object):
                 year = int(env['OCNDIAG_YEAR1']) 
             else:
                 year = int(env['OCNDIAG_TSERIES_YEAR1']) 
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if 'TRUE' in env['OCNDIAG_MODELCASE_INPUT_TSERIES'] :
@@ -354,7 +354,7 @@ class toolTemplate(object):
                 year = int(env['OCNDIAG_YEAR1']) 
             else:
                 year = int(env['OCNDIAG_TSERIES_YEAR1']) 
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             dependancy = 'ocn_averages'
@@ -385,7 +385,7 @@ class toolTemplate(object):
             else:
                 year = trendYear
                 firstyr = int(env['LNDDIAG_trends_first_yr_1'])
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if self.check_djf(year, firstyr, env):
@@ -421,7 +421,7 @@ class toolTemplate(object):
             else:
                 year = trendYear
                 firstyr = int(env['LNDDIAG_trends_first_yr_1'])
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if self.check_djf(year, firstyr, env):
@@ -446,7 +446,7 @@ class toolTemplate(object):
         specs = {}
         if 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
             year = int(env['ICEDIAG_ENDYR_DIFF']) 
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             if 'TRUE' in env['ICEDIAG_DIFF_TIMESERIES'] :
@@ -468,7 +468,7 @@ class toolTemplate(object):
         specs = {}
         if 'TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
             year = int(env['ICEDIAG_ENDYR_DIFF'])
-            date_s = str(year)+'-01-01'
+            date_s = string.zfill(str(year),4)+'-01-01'
             date_queue = [date_s]
 
             dependancy = 'ice_averages'
