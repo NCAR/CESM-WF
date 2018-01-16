@@ -108,12 +108,18 @@ def create_cylc_input(graph, env, path):
         if ensemble:
             f.write('    [[case_build__{{I}} ]]\n')
             f.write('    {% set d = \"'+cr+'.\" %}\n')
-            f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/case.build\n')
+            if 'cheyenne' in env['machine_name']:
+                f.write('        script = cd {{d}}{{j}};  qcmd -A '+env['PROJECT']+' {{d}}{{j}}/case.build\n')
+            else:
+                f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/case.build\n')
         else:
             f.write('    [[case_build]]\n')
-            f.write('        script = '+cr+'/case.build\n')
+            if 'cheyenne' in env['machine_name']:
+                f.write('        script = qcmd -A '+env['PROJECT']+' '+cr+'/case.build\n')
+            else:
+                f.write('        script = '+cr+'/case.build\n')
         if 'cheyenne' in env['machine_name']:
-            if 'case_run' in task or 'case_st_archive' in task:
+            if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
                 f.write('        [[[job]]]\n'+
                     '                method = '+env['batch_type']+'\n'+
                     '                execution time limit = PT12H\n'+
@@ -156,7 +162,7 @@ def create_cylc_input(graph, env, path):
             f.write('        script = '+cr+'/'+commands[tool]+'\n')
 
         if 'cheyenne' in env['machine_name']:
-            if 'case_run' in task or 'case_st_archive' in task:
+            if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
                 f.write('        [[[job]]]\n'+
                     '                method = '+env['batch_type']+'\n'+
                     '                execution time limit = PT12H\n'+

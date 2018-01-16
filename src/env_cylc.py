@@ -1,4 +1,5 @@
 import os, sys, subprocess, glob
+import math
         
 from standard_script_setup          import *
 from CIME.case import Case
@@ -135,31 +136,50 @@ class EnvCylc():
         
         num_nodes = case.num_nodes
         bjobs = batch.get_batch_jobs()
-        for job, _ in bjobs:
+        for job, jsect in bjobs:
             job_ = str.replace(job,'.','_')
             directives[job_] = []
 
             #task_count = jsect["task_count"]
-            task_count = env_batch.get_value("task_count", subgroup=job)
-            if task_count == "default":
-                models = case.get_values("COMP_CLASSES")
-                env_mach_pes = case.get_env("mach_pes") 
-                task_count = env_mach_pes.get_total_tasks(models)
-                ptile = case.get_value("PES_PER_NODE")
-                self.num_nodes = case.num_nodes
-                self.thread_count = case.thread_count
-            else:
-                ptile = 4                
-                self.num_nodes = 1
-                self.thread_count = 1
+            #task_count = env_batch.get_value("task_count", subgroup=job)
+
+            models = case.get_values("COMP_CLASSES")
+            env_mach_pes = case.get_env("mach_pes")
+            #task_count = env_mach_pes.get_total_tasks(models)
+            ptile = case.get_value("PES_PER_NODE")
+            self.num_nodes = case.num_nodes
+            self.thread_count = case.thread_count
+
+            task_count = jsect["task_count"] if "task_count" in jsect else env_mach_pes.get_total_tasks(models)     
+
+#            if task_count == "default":
+#                models = case.get_values("COMP_CLASSES")
+#                env_mach_pes = case.get_env("mach_pes") 
+#                task_count = env_mach_pes.get_total_tasks(models)
+#                ptile = case.get_value("PES_PER_NODE")
+#                self.num_nodes = case.num_nodes
+#                self.thread_count = case.thread_count
+#            else:
+#                ptile = 4                
+#                self.num_nodes = 1
+#                self.thread_count = 1
 
             self.ptile = ptile
             self.total_tasks = task_count
             self.tasks_per_node = ptile
 
-            queue = env_batch.select_best_queue(int(task_count),job)
-            if queue is None:
-                queue = env_batch.select_best_queue(task_count,job)
+#            queue = env_batch.select_best_queue(int(task_count),job=job)
+#            if queue is None:
+#                queue = env_batch.select_best_queue(task_count,job)
+            all_queue = []
+            all_queue.append(env_batch.get_default_queue())
+            all_queue = all_queue + env_batch.get_all_queues()               
+            queue = None
+            for q in all_queue:
+                if q is not None:
+                    if queue is None:
+                        queue = q.text
+
             wall_time=None
             #wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
             wall_time = env_batch.get_queue_specs(queue)[3] if wall_time is None else wall_time
@@ -167,11 +187,13 @@ class EnvCylc():
             env_batch.set_value("JOB_QUEUE", queue, subgroup=job)
 
             direct = ''
-            ds = env_batch.get_batch_directives(case, job, raw=True)
+            #ds = env_batch.get_batch_directives(case, job, raw=True)
+            overrides = {"total_tasks": int(task_count),"num_nodes":int(math.ceil(float(task_count)/float(case.tasks_per_node)))}
+            ds = env_batch.get_batch_directives(case, job, overrides=overrides)
             dss = ds.split('\n') 
             for d in dss:
-                #direct = direct + transform_vars(d, case=case, subgroup=job)   
-                direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
+                direct = direct + transform_vars(d, case=case, subgroup=job)   
+                #direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
 
             s = env_batch.get_submit_args(case, job)
             bd = env_batch.get_node("batch_directive").text

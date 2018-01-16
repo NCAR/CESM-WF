@@ -29,6 +29,9 @@ email = os.environ['USER']+'@ucar.edu'
 # TEMP UNTIL DB COMPLETE
 db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
 
+# Machine to run pp on (geyser, caldera, cheyenne, default)
+ppmach = 'cheyenne'
+
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
 cesm_xml={
 	 'RESUBMIT': '4',
@@ -75,7 +78,7 @@ pp_xml={
 def main(argv=None):
 
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha07c/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha08e/'
 
     create(cesm_code_base, testing=False)
 
@@ -257,7 +260,7 @@ def create(cesm_code_base, testing=True, command=None):
     print ''
     os.chdir(cdir+'/src/')
     case_name = os.path.basename(os.path.normpath(case_root))
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -b '+build+' -s '+case_name+'.suite.cmip6'+' -d '+case_root+' -g workflow.png'+' -e '+email)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -b '+build+' -s '+case_name+'.suite.cmip6'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach)
 
     os.chdir(cdir)
 
@@ -272,7 +275,7 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '               - build the case'
 	print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name+'/workflow.png'
 	print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
-	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email
+	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach
 	print '               - execute: gcylc '+case_name+'.suite.cmip6'
 	print ''
 	print '#########################################################################'

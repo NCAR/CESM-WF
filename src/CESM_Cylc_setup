@@ -32,6 +32,8 @@ def parseArgs(argv = None):
                         help='the start number of the first ensemble member', required=False)
     parser.add_argument('-2','--end',default="999", type=str,
                         help='the end number of the last ensemble member', required=False)
+    parser.add_argument('-m','--ppmach',default='default',type=str,
+                        help='machine to run postprocessing on', required=False)
     return parser.parse_args(argv)
 
 
@@ -109,12 +111,16 @@ def main(argv=None):
     env['end'] = args.end
     env['ensemble_root'] = args.casedir
     env['build'] = args.build
+    env['pp_machine_name'] = args.ppmach
 
     if args.email != None:
         env['email'] = args.email
     else:
         env['email'] = getpass.getuser()+'@ucar.edu' 
 
+    env['PROJECT'] = os.getenv('PROJECT')
+
+    print 'PROJECT: ',env['PROJECT']
     print 'RESUBMIT: ', env['RESUBMIT']
     print 'RUNDIR: ', env['RUNDIR']
     print 'RUN_STARTDATE: ', env['RUN_STARTDATE']
