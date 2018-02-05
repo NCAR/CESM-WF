@@ -178,7 +178,7 @@ class EnvCylc():
             for q in all_queue:
                 if q is not None:
                     if queue is None:
-                        queue = q.text
+                        queue = q.xml_element.text
 
             wall_time=None
             #wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
@@ -189,6 +189,7 @@ class EnvCylc():
             direct = ''
             #ds = env_batch.get_batch_directives(case, job, raw=True)
             overrides = {"total_tasks": int(task_count),"num_nodes":int(math.ceil(float(task_count)/float(case.tasks_per_node)))}
+            overrides["job_id"] = case.get_value("CASE") + os.path.splitext(job)[1]
             ds = env_batch.get_batch_directives(case, job, overrides=overrides)
             dss = ds.split('\n') 
             for d in dss:
@@ -196,7 +197,7 @@ class EnvCylc():
                 #direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
 
             s = env_batch.get_submit_args(case, job)
-            bd = env_batch.get_node("batch_directive").text
+            bd = env_batch.get_batch_directives(case, job, overrides=overrides) 
             direct = direct.replace(bd,'')
             direct = direct + s 
             direct = direct.replace('-', '\n-')
@@ -204,6 +205,8 @@ class EnvCylc():
             for d in direct:
                 d.lstrip()
                 d.strip()
+                if '#PBS' in d:
+                    d=d.replace("#PBS",'')
                 d = d.split(' ')
                 d=' '.join(d).split()
                 if len(d) == 2:
@@ -240,7 +243,7 @@ class EnvCylc():
             elif choice == 'N' or choice == 'n':
                 valid = True
                 user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
-        case.set_value("RUN_WITH_SUBMIT", True)
+        #case.set_value("RUN_WITH_SUBMIT", True)
        
         if os.path.isdir(my_case+'/postprocess/'):
             pp_dir = my_case+'/postprocess/'

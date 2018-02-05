@@ -78,7 +78,7 @@ pp_xml={
 def main(argv=None):
 
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha08e/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha08g/'
 
     create(cesm_code_base, testing=False)
 
@@ -235,7 +235,7 @@ def create(cesm_code_base, testing=True, command=None):
 
         err=os.system('./iconform')
         if err!=0:
-            print '\033[91m','Error: Failed in call to case.setup','\033[0m'
+            print '\033[91m','Error: Failed in call to iconform','\033[0m'
             sys.exit()
     
 
