@@ -150,7 +150,8 @@ class EnvCylc():
             self.num_nodes = case.num_nodes
             self.thread_count = case.thread_count
 
-            task_count = jsect["task_count"] if "task_count" in jsect else env_mach_pes.get_total_tasks(models)     
+            #task_count = jsect["task_count"] if "task_count" in jsect else env_mach_pes.get_total_tasks(models)     
+            task_count = case.get_value("TOTALPES")*int(case.thread_count)
 
 #            if task_count == "default":
 #                models = case.get_values("COMP_CLASSES")
@@ -190,6 +191,8 @@ class EnvCylc():
             #ds = env_batch.get_batch_directives(case, job, raw=True)
             overrides = {"total_tasks": int(task_count),"num_nodes":int(math.ceil(float(task_count)/float(case.tasks_per_node)))}
             overrides["job_id"] = case.get_value("CASE") + os.path.splitext(job)[1]
+            overrides["batchdirectives"] = env_batch.get_batch_directives(case, job, overrides=overrides)
+                
             ds = env_batch.get_batch_directives(case, job, overrides=overrides)
             dss = ds.split('\n') 
             for d in dss:
@@ -198,20 +201,47 @@ class EnvCylc():
 
             s = env_batch.get_submit_args(case, job)
             bd = env_batch.get_batch_directives(case, job, overrides=overrides) 
-            direct = direct.replace(bd,'')
-            direct = direct + s 
-            direct = direct.replace('-', '\n-')
-            direct = direct.split('\n')
-            for d in direct:
-                d.lstrip()
-                d.strip()
-                if '#PBS' in d:
-                    d=d.replace("#PBS",'')
-                d = d.split(' ')
-                d=' '.join(d).split()
-                if len(d) == 2:
-                    if ' ' not in d[0] and ' ' not in d[1] and 'walltime' not in d[1]:
-                        directives[job_].append(d[0]+' = '+d[1])
+
+# Add this back in when cime is more stable
+#            if "run" not in job_:
+#                direct = direct.replace(bd,'')
+#                direct = direct + s 
+#                direct = direct.replace('-', '\n-')
+#                direct = direct.split('\n')
+#                for d in direct:
+#                    d.lstrip()
+#                    d.strip()
+#                    if '#PBS' in d:
+#                        d=d.replace("#PBS",'')
+#                    d = d.split(' ')
+#                    d=' '.join(d).split()
+#                    if len(d) == 2:
+#                        if ' ' not in d[0] and ' ' not in d[1] and 'walltime' not in d[1]:
+#                            directives[job_].append(d[0]+' = '+d[1])
+
+#### Start temp code to get pbs directives from case.run
+            if 'st_archive' in job_:
+                directives[job_].append("-A = "+os.getenv('PROJECT'))
+                directives[job_].append("-q = regular")
+                with open(my_case+"/case.st_archive") as f:
+                    for l in f:
+                        if '#PBS' in l:
+                            pbs_split = l.split()
+                            if len(pbs_split) == 3:
+                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+            else:
+                with open(my_case+"/.case.run") as f:
+                    directives[job_].append("-A = "+os.getenv('PROJECT'))
+                    directives[job_].append("-q = regular")
+                    for l in f:
+                        if '#PBS' in l:
+                            pbs_split = l.split()
+                            if len(pbs_split) == 3:
+                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+
+
+#### End temp code to get pbs directives from case.run
+
         self.env['machine_name'] = machine_name
         self.env['batch_type'] = env_batch.get_batch_system_type()
         self.env['directives'] = directives
