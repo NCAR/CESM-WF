@@ -82,7 +82,7 @@ pp_xml={
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha08e/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/my_cesm_sandbox/'
 
     create(cesm_code_base, testing=False)
 
@@ -284,8 +284,28 @@ def create(cesm_code_base, testing=True, command=None):
 
     os.chdir(cdir)
 
+    if not testing:
 
-    if not testing:    
+        outf = open(first_case_root+"/Cylc.Instructions.txt","w")
+        outf.write( '##########################################################################\n')
+        outf.write( '\n')
+        outf.write( '   New CESM case created with Post Processing and Cylc Suite Enabled in\n')
+        outf.write( '     '+first_case_root+'-'+case_root+'\n')
+        outf.write( '  \n')
+        outf.write( '   Next steps: \n')
+        if build == False or build == 'FALSE' or build == 'false':
+            outf.write( '               - build the cases\n')
+        outf.write( '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png\n')
+        outf.write( '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: \n')
+        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+"\n")
+        outf.write( '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6\n')
+        outf.write( '\n')
+        outf.write( '#########################################################################\n')
+        outf.write( '\n')
+        outf.close()
+
+
+    
 	print '##########################################################################'
 	print ''
 	print '   New CESM case created with Post Processing and Cylc Suite Enabled in'
@@ -299,6 +319,7 @@ def create(cesm_code_base, testing=True, command=None):
 	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach
 	print '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6'
 	print ''
+        print '   These instructions have also been written to '+first_case_root+"/Cylc.Instructions.txt"
 	print '#########################################################################'
 	print ''
 
