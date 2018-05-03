@@ -82,7 +82,7 @@ pp_xml={
 def main(argv=None):
 
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/my_cesm_sandbox/'
+    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/my_cesm_sandbox2/'
 
     create(cesm_code_base, testing=False)
 
@@ -139,6 +139,22 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '\033[91m','Error: Failed to create post processing','\033[0m'                            
 	    print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 	    sys.exit()
+        print '############################################'
+        print ''
+        print '   Figuring out which variables need to be '
+        print '   outputted by CESM'
+        print ''
+        print '############################################'
+        print ''
+        # while virtual env is activated, get the cesm variable lists for the output we need the model to write
+        with open(db_file) as db:
+            db_info = json.load(db)
+        exp_name = db_info["experiment_id"]
+        err=os.system(cdir+'/src/get_model_vars -e '+ exp_name+' -d /glade/p/cesm/conform-input/cmip6_input/')
+        if err!=0:
+            print '\033[91m','Error: Failed to create variable lists','\033[0m'
+            print '\033[91m','Tried running: ','./get_model_vars -h '+ exp_name,'\033[0m'
+            sys.exit()
 	# Get old values back
 	os.environ['PATH'] = old_os_path
 	sys.prefix = old_sys_prefix
