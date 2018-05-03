@@ -1,0 +1,231 @@
+#! /usr/bin/env python
+
+import os, fnmatch, json, glob
+import subprocess
+import argparse
+from datetime import datetime
+
+run_type = "CAM"
+#run_type = "WACCM"
+
+ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","plev8","plev10",
+          "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",
+          "lon","lat"]          
+
+cmip6_realms = {
+	"aerosol":"atm",
+        "atmos":"atm",
+        "atmosChem":"atm",
+        "land":"lnd,rof",
+        "landIce":"glc",
+        "ocean":"ocn",
+        "ocnBgChem":"ocn",
+        "seaIce":"ice"
+}
+cesm_realms = {
+        "cam":"atm",
+        "clm2":"lnd,rof",
+        "cism":"glc",
+        "pop":"ocn",
+        "cice":"ice"
+}
+variable_list = {
+    "atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "lnd,rof":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "ocn":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "ice":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
+}
+
+def parseArgs(argv = None):
+
+    """Process the command line arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description='get_model_vars: prints out the variables that need to be outputted by the model to complete the request.')
+
+    parser.add_argument('-e', '--exp', default='None', type=str,
+                        help='The name of the experiment.')
+
+    parser.add_argument('-d', '--dir', default='None', type=str,
+                        help='The directory of the PyConform configuration files.')
+
+    return parser.parse_args(argv)
+
+
+def create_jsons(exp, dir):
+
+    global_attributes = dir+'/CESM_CMIP6.ga'
+    if run_type == "CAM":
+        definitions = dir+'/CESM_MastList.def' 
+    else:
+        definitions = dir+'/CESM_WACCM_MastList.def'
+    exp_name = exp
+    output_dir = 'xxxxxxx' 
+    json_dir = 'tmp/'+exp_name+'/'
+
+    try:
+        pipe = subprocess.Popen(['iconform -g {0} -d {1} -tt xml -e {2} -p {3} -o {4}'.format(
+            global_attributes, definitions, exp_name, output_dir, json_dir)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        #print('iconform:  {0}'.format(output))
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
+
+def find_match(exp):
+
+    var_defs = {}
+
+    tfound=0
+    tmissing=0
+    tfound_def=0
+    tmissing_def=0
+
+    js = glob.glob('tmp/'+exp+"/*.json")
+    for j in js:
+        if 'MISSING_DEFS.json' in j:
+            js.remove(j)
+    for j in js:
+        jd = json.load(open(j))
+        var_defs[j] = {}
+        found = {}
+        missing = {}
+        dims = []
+        no_def = []
+        rl = None
+        freql = None
+
+        # get the cesm var names from the defs in json file
+        cmd = "vardeps -f -n "+j
+        #print ('---------------------------------------')
+        #print (cmd)
+        p = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        end = False
+        output = p.stdout.read().split('\n')
+        for l in output:
+            if '[' in l and ']' in l and ':' in l:
+                tfound_def = tfound_def + 1
+                split = l.split();
+                var_defs[j][split[0]] = {}
+                var_defs[j][split[0]]["freq"] = split[1].replace("[","").replace("]","").replace(":","").split(",")[0]
+                if 'fx' in var_defs[j][split[0]]["freq"]:
+                    var_defs[j][split[0]]["freq"] = 'mon'
+                var_defs[j][split[0]]["realm"] = split[1].replace("[","").replace("]","").replace(":","").split(",")[1] 
+                var_defs[j][split[0]]["vars"] = l.split(":")[1].split()
+                var_defs[j][split[0]]["var_check"] = {}                
+
+                v = var_defs[j][split[0]]["vars"]
+                r = var_defs[j][split[0]]["realm"]
+                f = var_defs[j][split[0]]["freq"]
+                for v1 in v:
+                    stream = ["zzzzzzzz","zzzzzzzz"]
+                    for k in jd.keys():
+                      if "definition" in jd[k].keys():
+                        if v1 in jd[k]["definition"] and "input_glob" in jd[k].keys():
+                            stream = jd[k]["input_glob"].split(".")
+                            if stream[1] not in variable_list[cesm_realms[stream[0]]].keys() and v1 not in ignore:
+                                variable_list[cesm_realms[stream[0]]][stream[1]] = [v1]
+                            else:
+                                if v1 not in variable_list[cesm_realms[stream[0]]][stream[1]] and v1 not in ignore:
+                                    variable_list[cesm_realms[stream[0]]][stream[1]].append(v1)
+                        elif v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
+                            variable_list[cmip6_realms[r]][f].append(v1)
+
+    total = 0
+    out = open("CESM_VARS_NEEDED_"+exp+"_"+datetime.now().strftime('%Y%m%d_%H%M%S')+".out","w")
+    for k1,v1 in  variable_list.iteritems():
+        print "----------------------------------"
+        out.write("----------------------------------"+"\n")
+        print k1
+        out.write(k1+"\n")
+        for k2,v2 in v1.iteritems():
+            print k2,"--->",v2
+            out.write(k2+"--->"+str(v2)+"\n")
+            total += len(v2)
+
+    print 'total variables: ',total
+    out.write('total variables: '+str(total)+"\n")
+    out.close()          
+
+    # create user_nl_cam
+    #"atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
+    out = open("user_nl_cam.fincls", "w")
+    out.write('! Users should add all user specific namelist changes below in the form of \n')
+    out.write('! namelist_var = new_namelist_value \n')
+    out.write('nhtfrq = 0, 0, -24, -6, -6, -3, -3, -1, -1\n')
+    out.write('mfilt  = 1, 1, 5, 20, 20, 40, 40, 120, 120 \n')
+    out.write('ndens  = 2, 2, 2, 2, 2, 2, 2, 2, 2\n')
+
+    #fincl1 -- month
+    out.write('fincl1 = ')
+    for v in variable_list["atm"]["mon"]:
+        out.write("\'"+v+':A'+"\', ")
+    for v in variable_list["atm"]["monC"]:
+        out.write("\'"+v+':A'+"\', ") 
+    out.write('\n\n')
+    #fincl2 -- month
+    out.write('fincl2 = ')
+    for v in variable_list["atm"]["monPt"]:
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl3 -- day
+    out.write('fincl3 = ')
+    for v in variable_list["atm"]["day"]:
+        out.write("\'"+v+':A'+"\', ")   
+    out.write('\n\n')
+
+    # fincl4 -- hour6
+    out.write('fincl4 = ')
+    for v in variable_list["atm"]["6hr"]:
+        out.write("\'"+v+':A'+"\', ")
+    out.write('\n\n')
+    # fincl5 -- hour6
+    out.write('fincl5 = ')
+    for v in variable_list["atm"]["6hrPt"]:
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl6 -- hour3
+    out.write('fincl6 = ')
+    for v in variable_list["atm"]["3hr"]:
+        out.write("\'"+v+':A'+"\', ")
+    out.write('\n\n')
+    # fincl7 -- hour3
+    out.write('fincl7 = ')
+    for v in variable_list["atm"]["3hrPt"]:
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl8 -- hour1
+    out.write('fincl8 = ')
+    for v in variable_list["atm"]["1hr"]:
+        out.write("\'"+v+':A'+"\', ")
+    for v in variable_list["atm"]["1hrCM"]:
+        out.write("\'"+v+':A'+"\', ")
+    out.write('\n\n')
+    # fincl9 -- hour1
+    out.write('fincl9 = ')
+    for v in variable_list["atm"]["1hrPt"]:
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    out.close()
+
+
+def main(argv=None):
+  
+    args = parseArgs(argv)
+    e = args.exp 
+    dir = args.dir
+    create_jsons(e, dir) 
+    find_match(e)
+
+
+
+if __name__ == '__main__':
+    main()
+
+
