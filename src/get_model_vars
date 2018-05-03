@@ -10,7 +10,7 @@ run_type = "CAM"
 
 ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","plev8","plev10",
           "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",
-          "lon","lat"]          
+          "lon","lat","P0"]          
 
 cmip6_realms = {
 	"aerosol":"atm",
@@ -130,7 +130,7 @@ def find_match(exp):
                             else:
                                 if v1 not in variable_list[cesm_realms[stream[0]]][stream[1]] and v1 not in ignore:
                                     variable_list[cesm_realms[stream[0]]][stream[1]].append(v1)
-                        elif v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
+                        elif v1 in jd[k]["definition"] and v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
                             variable_list[cmip6_realms[r]][f].append(v1)
 
     total = 0
