@@ -3,6 +3,12 @@ import os, sys, glob, shutil, subprocess
 import distutils.dir_util
 import json
 
+# Get the casename 
+for i in range(0, len(sys.argv)):
+    if '-case' in sys.argv[i]:
+        case_root = sys.argv[i+1]
+
+
 #############################################################################
 #
 # User Modify Section
@@ -53,7 +59,7 @@ pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
-       'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/',
+       'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
        'ATMDIAG_test_first_yr': '2',
@@ -156,6 +162,24 @@ def create(cesm_code_base, testing=True, command=None):
 		print '\033[91m','Error: Failed to create post processing','\033[0m'                            
 		print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 		sys.exit()
+
+            print '############################################'
+            print ''
+            print '   Figuring out which variables need to be '
+            print '   outputted by CESM'
+            print ''
+            print '############################################'
+            print ''
+            # while virtual env is activated, get the cesm variable lists for the output we need the model to write
+            with open(db_file) as db:
+                db_info = json.load(db)
+            exp_name = db_info["experiment_id"]
+            err=os.system(cdir+'/src/get_model_vars -e '+ exp_name+' -d /glade/p/cesm/conform-input/cmip6_input/')
+            if err!=0:
+                print '\033[91m','Error: Failed to create variable lists','\033[0m'
+                print '\033[91m','Tried running: ','./get_model_vars -h '+ exp_name,'\033[0m'
+                sys.exit()
+
 	    # Get old values back
 	    os.environ['PATH'] = old_os_path
 	    sys.prefix = old_sys_prefix
