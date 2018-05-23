@@ -149,66 +149,79 @@ def find_match(exp):
     out.write('total variables: '+str(total)+"\n")
     out.close()          
 
+    # Eliminate variables that collide (need both average and instantaneous in one stream, eliminate the instantaneous field)
+    # look through monthlies
+    for v in variable_list["atm"]["mon"]:
+        if v.strip() in variable_list["atm"]["monPt"]:
+             variable_list["atm"]["monPt"].remove(v)
+    for v in variable_list["atm"]["monC"]:
+        if v.strip() in variable_list["atm"]["monPt"]:
+             variable_list["atm"]["monPt"].remove(v) 
+    # there is only one daily type, skip over to hourly 6
+    for v in variable_list["atm"]["6hr"]:
+        if v.strip() in variable_list["atm"]["6hrPt"]:
+             variable_list["atm"]["6hrPt"].remove(v)
+    # look through hourly 3
+    for v in variable_list["atm"]["3hr"]:
+        if v.strip() in variable_list["atm"]["3hrPt"]:
+             variable_list["atm"]["3hrPt"].remove(v)
+    # look through hourlies
+    for v in variable_list["atm"]["1hr"]:
+        if v.strip() in variable_list["atm"]["1hrPt"]:
+             variable_list["atm"]["1hrPt"].remove(v)
+    for v in variable_list["atm"]["1hr"]:
+        if v.strip() in variable_list["atm"]["1hrCM"]:
+             variable_list["atm"]["1hrCM"].remove(v)
+
+
     # create user_nl_cam
     #"atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
     out = open("user_nl_cam.fincls", "w")
     out.write('! Users should add all user specific namelist changes below in the form of \n')
     out.write('! namelist_var = new_namelist_value \n')
-    out.write('nhtfrq = 0, 0, -24, -6, -6, -3, -3, -1, -1\n')
-    out.write('mfilt  = 1, 1, 5, 20, 20, 40, 40, 120, 120 \n')
-    out.write('ndens  = 2, 2, 2, 2, 2, 2, 2, 2, 2\n')
+    out.write('nhtfrq         =           0,  -24,  -6,  -3,  -1\n')
+    out.write('mfilt  = 1, 5, 20, 40, 120 \n')
+    out.write('ndens  = 2, 2, 2, 2, 2\n')
 
     #fincl1 -- month
     out.write('fincl1 = ')
-    for v in variable_list["atm"]["mon"]:
+    for v in sorted(variable_list["atm"]["mon"]):
         out.write("\'"+v+':A'+"\', ")
-    for v in variable_list["atm"]["monC"]:
+    for v in sorted(variable_list["atm"]["monC"]):
         out.write("\'"+v+':A'+"\', ") 
-    out.write('\n\n')
-    #fincl2 -- month
-    out.write('fincl2 = ')
-    for v in variable_list["atm"]["monPt"]:
+    for v in sorted(variable_list["atm"]["monPt"]):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
 
-    # fincl3 -- day
-    out.write('fincl3 = ')
-    for v in variable_list["atm"]["day"]:
+    # fincl2 -- day
+    out.write('fincl2 = ')
+    for v in sorted(variable_list["atm"]["day"]):
         out.write("\'"+v+':A'+"\', ")   
     out.write('\n\n')
 
-    # fincl4 -- hour6
+    # fincl3 -- hour6
+    out.write('fincl3 = ')
+    for v in sorted(variable_list["atm"]["6hr"]):
+        out.write("\'"+v+':A'+"\', ")
+    for v in sorted(variable_list["atm"]["6hrPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl4 -- hour3
     out.write('fincl4 = ')
-    for v in variable_list["atm"]["6hr"]:
+    for v in sorted(variable_list["atm"]["3hr"]):
         out.write("\'"+v+':A'+"\', ")
+    for v in sorted(variable_list["atm"]["3hrPt"]):
+        out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
-    # fincl5 -- hour6
+
+    # fincl5 -- hour1
     out.write('fincl5 = ')
-    for v in variable_list["atm"]["6hrPt"]:
-        out.write("\'"+v+':I'+"\', ")
-    out.write('\n\n')
-
-    # fincl6 -- hour3
-    out.write('fincl6 = ')
-    for v in variable_list["atm"]["3hr"]:
+    for v in sorted(variable_list["atm"]["1hr"]):
         out.write("\'"+v+':A'+"\', ")
-    out.write('\n\n')
-    # fincl7 -- hour3
-    out.write('fincl7 = ')
-    for v in variable_list["atm"]["3hrPt"]:
-        out.write("\'"+v+':I'+"\', ")
-    out.write('\n\n')
-
-    # fincl8 -- hour1
-    out.write('fincl8 = ')
-    for v in variable_list["atm"]["1hr"]:
+    for v in sorted(variable_list["atm"]["1hrCM"]):
         out.write("\'"+v+':A'+"\', ")
-    for v in variable_list["atm"]["1hrCM"]:
-        out.write("\'"+v+':A'+"\', ")
-    out.write('\n\n')
-    # fincl9 -- hour1
-    out.write('fincl9 = ')
-    for v in variable_list["atm"]["1hrPt"]:
+    for v in sorted(variable_list["atm"]["1hrPt"]):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
 
@@ -216,13 +229,12 @@ def find_match(exp):
 
 
 def main(argv=None):
-  
+ 
     args = parseArgs(argv)
     e = args.exp 
     dir = args.dir
     create_jsons(e, dir) 
     find_match(e)
-
 
 
 if __name__ == '__main__':
