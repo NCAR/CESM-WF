@@ -7,6 +7,7 @@ from datetime import datetime
 
 run_type = "CAM"
 #run_type = "WACCM"
+#run_type = "HIRES"
 
 ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","plev8","plev10",
           "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",
@@ -58,6 +59,8 @@ def create_jsons(exp, dir):
     global_attributes = dir+'/CESM_CMIP6.ga'
     if run_type == "CAM":
         definitions = dir+'/CESM_MastList.def' 
+    elif run_type == 'HIRES':
+        definitions = dir+'CESM_HIRES_MastList.def'
     else:
         definitions = dir+'/CESM_WACCM_MastList.def'
     exp_name = exp
@@ -74,7 +77,7 @@ def create_jsons(exp, dir):
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
 
-def find_match(exp):
+def find_match(exp,site_string):
 
     var_defs = {}
 
@@ -179,9 +182,14 @@ def find_match(exp):
     out = open("user_nl_cam.fincls", "w")
     out.write('! Users should add all user specific namelist changes below in the form of \n')
     out.write('! namelist_var = new_namelist_value \n')
-    out.write('nhtfrq         =           0,  -24,  -6,  -3,  -1\n')
-    out.write('mfilt  = 1, 5, 20, 40, 120 \n')
-    out.write('ndens  = 2, 2, 2, 2, 2\n')
+    out.write('nhtfrq         =           0,  -24,  -6,  -3,  -1,   1\n')
+    out.write('mfilt  = 1, 5, 20, 40, 120, 240 \n')
+    out.write('ndens  = 2, 2, 2, 2, 2, 2\n')
+
+    # site locations
+    if len(variable_list["atm"]["subhrPt"])>0:
+        out.write("FINCL6LONLAT        = "+site_string)
+        out.write('\n\n')
 
     #fincl1 -- month
     out.write('fincl1 = ')
@@ -225,8 +233,25 @@ def find_match(exp):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
 
+    # fincl6 -- subhourly
+    out.write('fincl6= ')
+    for v in sorted(variable_list["atm"]["subhrPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
     out.close()
 
+def get_sites(sites_file):
+
+    site_string = ''
+
+    if os.path.isfile(sites_file):
+        with open(sites_file) as sfile:
+            for line in sfile:
+                site = line.split(',')[:3]
+                site_string = site_string + "\'" + site[1].strip() + "_" + site[2].strip()+"\', "
+
+    return site_string
 
 def main(argv=None):
  
@@ -234,7 +259,8 @@ def main(argv=None):
     e = args.exp 
     dir = args.dir
     create_jsons(e, dir) 
-    find_match(e)
+    site_string = get_sites("/glade/p/cesm/conform-input/cmip6_input/cmip6-cfsite-locations.txt")
+    find_match(e,site_string)
 
 
 if __name__ == '__main__':

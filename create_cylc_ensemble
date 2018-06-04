@@ -41,6 +41,7 @@ ppmach = 'cheyenne'
 # Set to 'True' or 'False' if this is a WACCM run
 # If set to true, this will modify some of the CESM-CMIP6 requested variable definitions (no other effect)
 WACCM_RUN = False
+HIRES_RUN = False
 
 # Set ensemble start and finish
 ensemble_start = 1
@@ -265,6 +266,12 @@ def create(cesm_code_base, testing=True, command=None):
         
             if WACCM_RUN:
                 err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def','\033[0m'
+                    sys.exit()
+            if HIRES_RUN:
+                err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_HIRES_MastList.def')
                 if err!=0:
                     print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
                     print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def','\033[0m'
