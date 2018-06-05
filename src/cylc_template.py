@@ -182,7 +182,7 @@ def create_cylc_input(graph, env, path, queue):
                 f.write('                '+d+'\n')
         elif 'case_run' in task:
             for d in env['directives']['timeseries']:
-                if '-q' in d and queue is not None:
+                if '-q' in d and 'None' not in queue:
                     d = d.replace(d.split()[-1],queue)    
                 f.write('                '+d+'\n')
         else:
