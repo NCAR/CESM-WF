@@ -34,6 +34,9 @@ def parseArgs(argv = None):
                         help='the end number of the last ensemble member', required=False)
     parser.add_argument('-m','--ppmach',default='default',type=str,
                         help='machine to run postprocessing on', required=False)
+    parser.add_argument('-q','--queue',default='default',type=str,
+                        help='user specified queue, non default', required=False)
+
     return parser.parse_args(argv)
 
 
@@ -172,7 +175,7 @@ def main(argv=None):
 
     g = graph.create_graph(keys,template)
 
-    cylc_template.create_cylc_input(g, env, args.path)
+    cylc_template.create_cylc_input(g, env, args.path, args.queue)
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 

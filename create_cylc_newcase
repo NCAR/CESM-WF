@@ -43,6 +43,10 @@ ppmach = 'cheyenne'
 WACCM_RUN = False 
 HIRES_RUN = False
 
+# Add a specific queue to use.  Set to None if you want the default.  Set to 'queue name' if you want a specific queue.
+queue = None
+
+
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
 cesm_xml={
 	 'RESUBMIT': '4',
@@ -301,7 +305,7 @@ def create(cesm_code_base, testing=True, command=None):
     print ''
     os.chdir(cdir+'/src/')
     case_name = os.path.basename(os.path.normpath(case_root))
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -b '+build+' -s '+case_name+'.suite.cmip6'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -b '+build+' -s '+case_name+'.suite.cmip6'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue)
 
     os.chdir(cdir)
 
@@ -318,7 +322,7 @@ def create(cesm_code_base, testing=True, command=None):
             outf.write( '               - build the case\n')
         outf.write( '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name+'/workflow.png\n')
         outf.write( '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: \n')
-        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach+'\n')
+        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+'\n')
         outf.write( '               - execute: gcylc '+case_name+'.suite.cmip6\n')
         outf.write( '\n')
         outf.write( '#########################################################################\n')
@@ -336,7 +340,7 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '               - build the case'
 	print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name+'/workflow.png'
 	print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
-	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach
+	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name+' -s '+case_name+'.suite'+' -d '+case_root+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue
 	print '               - execute: gcylc '+case_name+'.suite.cmip6'
 	print ''
         print '   These instructions have also been written to '+case_root+"/Cylc.Instructions.txt"

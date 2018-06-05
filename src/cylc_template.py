@@ -12,7 +12,7 @@ commands = {'case_build': 'case.build', 'case_run': 'case.run.cylc', 'case_st_ar
             'ice_averages': 'postprocess/ice_averages', 'ice_diagnostics': 'postprocess/ice_diagnostics'}
 
 
-def create_cylc_input(graph, env, path):
+def create_cylc_input(graph, env, path, queue):
 
     if env['start'] != env['end']:
         ensemble=True
@@ -179,6 +179,11 @@ def create_cylc_input(graph, env, path):
 
         if tool == 'timeseriesL':
             for d in env['directives']['timeseries']:
+                f.write('                '+d+'\n')
+        elif 'case_run' in task:
+            for d in env['directives']['timeseries']:
+                if '-q' in d and queue is not None:
+                    d = d.replace(d.split()[-1],queue)    
                 f.write('                '+d+'\n')
         else:
             for d in env['directives'][tool]:
