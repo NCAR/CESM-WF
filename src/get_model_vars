@@ -31,7 +31,7 @@ cesm_realms = {
         "cice":"ice"
 }
 variable_list = {
-    "atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[]},
     "lnd,rof":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
     "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
     "ocn":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
@@ -197,6 +197,8 @@ def find_match(exp,site_string):
         out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["monC"]):
         out.write("\'"+v+':A'+"\', ") 
+    for v in sorted(variable_list["atm"]["h0"]):
+        out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["monPt"]):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
@@ -205,11 +207,15 @@ def find_match(exp,site_string):
     out.write('fincl2 = ')
     for v in sorted(variable_list["atm"]["day"]):
         out.write("\'"+v+':A'+"\', ")   
+    for v in sorted(variable_list["atm"]["h1"]):
+        out.write("\'"+v+':A'+"\', ")
     out.write('\n\n')
 
     # fincl3 -- hour6
     out.write('fincl3 = ')
     for v in sorted(variable_list["atm"]["6hr"]):
+        out.write("\'"+v+':A'+"\', ")
+    for v in sorted(variable_list["atm"]["h2"]):
         out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["6hrPt"]):
         out.write("\'"+v+':I'+"\', ")
@@ -218,6 +224,8 @@ def find_match(exp,site_string):
     # fincl4 -- hour3
     out.write('fincl4 = ')
     for v in sorted(variable_list["atm"]["3hr"]):
+        out.write("\'"+v+':A'+"\', ")
+    for v in sorted(variable_list["atm"]["h3"]):
         out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["3hrPt"]):
         out.write("\'"+v+':I'+"\', ")
@@ -229,12 +237,16 @@ def find_match(exp,site_string):
         out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["1hrCM"]):
         out.write("\'"+v+':A'+"\', ")
+    for v in sorted(variable_list["atm"]["h4"]):
+        out.write("\'"+v+':A'+"\', ")
     for v in sorted(variable_list["atm"]["1hrPt"]):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
 
     # fincl6 -- subhourly
     out.write('fincl6= ')
+    for v in sorted(variable_list["atm"]["h5"]):
+        out.write("\'"+v+':I'+"\', ")
     for v in sorted(variable_list["atm"]["subhrPt"]):
         out.write("\'"+v+':I'+"\', ")
     out.write('\n\n')
