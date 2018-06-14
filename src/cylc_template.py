@@ -147,12 +147,11 @@ def create_cylc_input(graph, env, path, queue):
         task = t.get_id()
         task_split = task.split('_')
         tool = task_split[0]
-        #print tool
         if 'atm' in tool or 'ocn' in tool or 'lnd' in tool or 'ice' in tool or 'case' in tool:
             tool = tool + '_' + task_split[1]
             if 'archive' in task_split[2]:
                tool = tool + '_' + task_split[2] 
-        #print tool
+        #print '****',tool
         if ensemble:
             f.write('    [['+task+'__{{I}} ]]\n')
             f.write('    {% set d = \"'+cr+'.\" %}\n')
@@ -180,8 +179,8 @@ def create_cylc_input(graph, env, path, queue):
         if tool == 'timeseriesL':
             for d in env['directives']['timeseries']:
                 f.write('                '+d+'\n')
-        elif 'case_run' in task:
-            for d in env['directives']['timeseries']:
+        elif tool == 'case_run':
+            for d in env['directives']['case_run']:
                 if '-q' in d and 'None' not in queue:
                     d = d.replace(d.split()[-1],queue)    
                 f.write('                '+d+'\n')
