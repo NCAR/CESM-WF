@@ -23,17 +23,11 @@ namelist_dir = ''
 cp_sourceMods = False
 sourceMods_dir = ''
 
-# Toggle to build the case
-build = 'False' #True or False 
-
 # Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
 # Email address to have cylc send wf status updates as it runs
-email = os.environ['USER']+'@ucar.edu'
-
-# TEMP UNTIL DB COMPLETE
-db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
+email = os.environ['USER']+'@ucar.edu,expdb-dev@cgd.ucar.edu'
 
 # Machine to run pp on (geyser, cheyenne)
 ppmach = 'cheyenne'
@@ -150,6 +144,21 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '\033[91m','Error: Failed to create post processing','\033[0m'                            
 	    print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 	    sys.exit()
+
+        print '############################################'
+        print ''
+        print '   Getting experiment details from the db   '
+        print ''
+        print '############################################'
+        print ''
+        case_name = os.path.basename(os.path.normpath(case_root))
+        err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user mickelso@mcs.anl.gov --password --expType CMIP6")
+        if err!=0:
+            print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
+            sys.exit()
+        #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
+        db_file = case_root+"/archive_files/db.json"
+
         print '############################################'
         print ''
         print '   Figuring out which variables need to be '
@@ -297,6 +306,22 @@ def create(cesm_code_base, testing=True, command=None):
 #	    print '\033[91m','Error: Failed in call to case.build','\033[0m'
 #	    sys.exit()
 
+    print '############################################'
+    print ''
+    print '   Archive the case in the db   '
+    print ''
+    print '############################################'
+    print ''
+    os.chdir(case_root)
+    case_name = os.path.basename(os.path.normpath(case_root))
+    err=os.system("./archive_metadata --user mickelso@mcs.anl.gov --password --expType CMIP6")
+    #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
+    if err!=0:
+        print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
+        sys.exit()
+
+    # Toggle to build the case
+    build = 'False' #True or False 
     print '############################################'
     print ''
     print '   Setup Cylc Automation'
