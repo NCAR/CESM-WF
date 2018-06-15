@@ -29,6 +29,9 @@ suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 # Email address to have cylc send wf status updates as it runs
 email = os.environ['USER']+'@ucar.edu,expdb-dev@cgd.ucar.edu'
 
+# svn username
+svn_username = ""
+
 # Machine to run pp on (geyser, cheyenne)
 ppmach = 'cheyenne'
 
@@ -152,7 +155,7 @@ def create(cesm_code_base, testing=True, command=None):
         print '############################################'
         print ''
         case_name = os.path.basename(os.path.normpath(case_root))
-        err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user mickelso@mcs.anl.gov --password --expType CMIP6")
+        err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user "+svn_username+" --password --expType CMIP6")
         if err!=0:
             print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
             sys.exit()
@@ -314,7 +317,7 @@ def create(cesm_code_base, testing=True, command=None):
     print ''
     os.chdir(case_root)
     case_name = os.path.basename(os.path.normpath(case_root))
-    err=os.system("./archive_metadata --user mickelso@mcs.anl.gov --password --expType CMIP6")
+    err=os.system("./archive_metadata --user "+svn_username+" --password --expType CMIP6")
     #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
     if err!=0:
         print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
