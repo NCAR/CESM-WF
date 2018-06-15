@@ -30,7 +30,10 @@ build = 'False' #True or False
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
 # Email address to have cylc send wf status updates as it runs
-email = os.environ['USER']+'@ucar.edu'
+email = os.environ['USER']+'@ucar.edu,expdb-dev@cgd.ucar.edu'
+
+# svn username
+svn_username = ""
 
 # TEMP UNTIL DB COMPLETE
 db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
@@ -48,7 +51,7 @@ ensemble_start = 1
 ensemble_end = 3
 
 # Add a specific queue to use.  Set to None if you want the default.  Set to 'queue name' if you want a specific queue.
-queue = None
+queue = 'None'
 
 
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
@@ -97,7 +100,7 @@ pp_xml={
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/my_cesm_sandbox/'
+    cesm_code_base = '/glade2/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
 
     create(cesm_code_base, testing=False)
 
@@ -167,6 +170,21 @@ def create(cesm_code_base, testing=True, command=None):
 		print '\033[91m','Error: Failed to create post processing','\033[0m'                            
 		print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 		sys.exit()
+
+            print '############################################'
+            print ''
+            print '   Getting experiment details from the db   '
+            print ''
+            print '############################################'
+            print ''
+            case_name = os.path.basename(os.path.normpath(case_root))
+            err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user "+svn_username+" --password --expType CMIP6")
+            if err!=0:
+                print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
+                sys.exit()
+            #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
+            db_file = case_root+"/archive_files/db.json"
+
 
             print '############################################'
             print ''
@@ -316,6 +334,18 @@ def create(cesm_code_base, testing=True, command=None):
 #		print '\033[91m','Error: Failed in call to case.build','\033[0m'
 #		sys.exit()
 
+        print '############################################'
+        print ''
+        print '   Archive the case in the db   '
+        print ''
+        print '############################################'
+        print ''
+        os.chdir(case_root)
+        err=os.system("./archive_metadata --user "+svn_username+" --password --expType CMIP6")
+        if err!=0:
+            print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
+            sys.exit()
+
     print '############################################'
     print ''
     print '   Setup Cylc Automation'
@@ -326,7 +356,7 @@ def create(cesm_code_base, testing=True, command=None):
     case_name = os.path.basename(os.path.normpath(first_case_root))
     case_name_base = case_name[:-4]
     uid = str(ensemble_start)+'-'+str(ensemble_end)
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite.cmip6'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite.cmip6'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue)
 
     os.chdir(cdir)
 
@@ -343,7 +373,7 @@ def create(cesm_code_base, testing=True, command=None):
             outf.write( '               - build the cases\n')
         outf.write( '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png\n')
         outf.write( '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: \n')
-        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+"\n")
+        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+"\n")
         outf.write( '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6\n')
         outf.write( '\n')
         outf.write( '#########################################################################\n')
@@ -362,7 +392,7 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '               - build the cases'
 	print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png'
 	print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
-	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue
+	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue
 	print '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6'
 	print ''
         print '   These instructions have also been written to '+first_case_root+"/Cylc.Instructions.txt"
