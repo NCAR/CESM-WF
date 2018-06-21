@@ -20,7 +20,7 @@ cmip6_realms = {
         "land":"lnd,rof",
         "landIce":"glc",
         "ocean":"ocn",
-        "ocnBgChem":"ocn",
+        "ocnBgchem":"ocn",
         "seaIce":"ice"
 }
 cesm_realms = {
