@@ -56,6 +56,7 @@ cesm_xml={
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
+       'TIMESERIES_OUTPUT_ROOTDIR': '/glade/scratch/cmip6/TIMESERIES/'+case_root.split('/')[-1],
        'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
