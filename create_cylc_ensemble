@@ -30,7 +30,7 @@ build = 'False' #True or False
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
 # Email address to have cylc send wf status updates as it runs
-email = os.environ['USER']+'@ucar.edu,expdb-dev@cgd.ucar.edu'
+email = os.environ['USER']+'@ucar.edu,expdb@cgd.ucar.edu'
 
 # svn username
 svn_username = ""
