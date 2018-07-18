@@ -27,10 +27,10 @@ sourceMods_dir = ''
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
 # Email address to have cylc send wf status updates as it runs
-email = os.environ['USER']+'@ucar.edu,expdb@cgd.ucar.edu'
+email = os.environ['USER']+'@ucar.edu,mickelso@ucar.edu,expdb@cgd.ucar.edu'
 
 # svn username
-svn_username = ""
+svn_username = "cmip6"
 
 # Machine to run pp on (geyser, cheyenne)
 ppmach = 'cheyenne'
@@ -264,6 +264,7 @@ def create(cesm_code_base, testing=True, command=None):
         # if running a waccm run, change the value of the definition file to be for the waccm def set
         if WACCM_RUN:
             err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def')
+            err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_WACCM.ga')
             if err!=0:
                 print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
                 print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def','\033[0m'
