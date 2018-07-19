@@ -120,10 +120,16 @@ def create_cylc_input(graph, env, path, queue):
                 f.write('        script = '+cr+'/case.build\n')
         if 'cheyenne' in env['machine_name']:
             if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
-                f.write('        [[[job]]]\n'+
-                    '                method = '+env['batch_type']+'\n'+
-                    '                execution time limit = PT12H\n'+
-                    '        [[[directives]]]\n')
+                if 'case_st_archive' in task:
+                    f.write('        [[[job]]]\n'+
+                        '                method = '+env['batch_type']+'\n'+
+                        '                execution time limit = PT1H\n'+
+                        '        [[[directives]]]\n')
+                else:
+                    f.write('        [[[job]]]\n'+
+                        '                method = '+env['batch_type']+'\n'+
+                        '                execution time limit = PT12H\n'+
+                        '        [[[directives]]]\n')
             else: 
                 f.write('        [[[job]]]\n'+
                         '                method = slurm\n'+
@@ -162,10 +168,16 @@ def create_cylc_input(graph, env, path, queue):
 
         if 'cheyenne' in env['machine_name']:
             if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
-                f.write('        [[[job]]]\n'+
-                    '                method = '+env['batch_type']+'\n'+
-                    '                execution time limit = PT12H\n'+
-                    '        [[[directives]]]\n')
+                if 'case_st_archive' in task:
+                        f.write('        [[[job]]]\n'+
+                        '                method = '+env['batch_type']+'\n'+
+                        '                execution time limit = PT1H\n'+
+                        '        [[[directives]]]\n')
+                else:
+                        f.write('        [[[job]]]\n'+
+                        '                method = '+env['batch_type']+'\n'+
+                        '                execution time limit = PT12H\n'+
+                        '        [[[directives]]]\n')
             else:
                 f.write('        [[[job]]]\n'+
                         '                method = slurm\n'+
