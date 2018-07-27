@@ -78,6 +78,20 @@ def create_jsons(exp, dir):
     except OSError as e:
         print('WARNING',e.errno,e.strerror)
 
+def outwrite(st,sm):
+
+    if 'MX' in st:
+        if ':A' in st:
+            st = st.replace(':A',':X')
+        elif ':I' in st:
+            st = st.replace(':I',':X')
+    elif 'MN' in st:
+        if ':A' in st:
+            st = st.replace(':A',':M')
+        elif ':I' in st:
+            st = st.replace(':I',':M')
+    sm.write(st) 
+
 def find_match(exp,site_string):
 
     var_defs = {}
@@ -204,61 +218,61 @@ def find_match(exp,site_string):
     #fincl1 -- month
     out.write('fincl1 = ')
     for v in sorted(variable_list["atm"]["mon"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["monC"]):
-        out.write("\'"+v+':A'+"\', ") 
+        outwrite("\'"+v+':A'+"\', ", out) 
     for v in sorted(variable_list["atm"]["h0"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["monPt"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     out.write('\n\n')
 
     # fincl2 -- day
     out.write('fincl2 = ')
     for v in sorted(variable_list["atm"]["day"]):
-        out.write("\'"+v+':A'+"\', ")   
+        outwrite("\'"+v+':A'+"\', ", out)   
     for v in sorted(variable_list["atm"]["h1"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     out.write('\n\n')
 
     # fincl3 -- hour6
     out.write('fincl3 = ')
     for v in sorted(variable_list["atm"]["6hr"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["h2"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["6hrPt"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     out.write('\n\n')
 
     # fincl4 -- hour3
     out.write('fincl4 = ')
     for v in sorted(variable_list["atm"]["3hr"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["h3"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["3hrPt"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     out.write('\n\n')
 
     # fincl5 -- hour1
     out.write('fincl5 = ')
     for v in sorted(variable_list["atm"]["1hr"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["1hrCM"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["h4"]):
-        out.write("\'"+v+':A'+"\', ")
+        outwrite("\'"+v+':A'+"\', ", out)
     for v in sorted(variable_list["atm"]["1hrPt"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     out.write('\n\n')
 
     # fincl6 -- subhourly
     out.write('fincl6= ')
     for v in sorted(variable_list["atm"]["h5"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     for v in sorted(variable_list["atm"]["subhrPt"]):
-        out.write("\'"+v+':I'+"\', ")
+        outwrite("\'"+v+':I'+"\', ", out)
     out.write('\n\n')
 
     out.close()
