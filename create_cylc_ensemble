@@ -23,9 +23,6 @@ namelist_root = ''
 cp_sourceMods = False
 sourceMods_dir = ''
 
-# Toggle to build the case
-build = 'False' #True or False 
-
 # Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
@@ -34,9 +31,6 @@ email = os.environ['USER']+'@ucar.edu,mickelso@ucar.edu,expdb@cgd.ucar.edu'
 
 # svn username
 svn_username = "cmip6"
-
-# TEMP UNTIL DB COMPLETE
-db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
 
 # Machine to run pp on (geyser, caldera, cheyenne, default)
 ppmach = 'cheyenne'
@@ -66,7 +60,7 @@ cesm_xml={
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
-       'STANDARDIZE_TIMESERIES': 'TRUE',
+       'TIMESERIES_OUTPUT_ROOTDIR': '/glade/scratch/cmip6/TIMESERIES/'+case_root.split('/')[-1],
        'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
@@ -100,7 +94,7 @@ pp_xml={
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade2/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
+    cesm_code_base = '/glade/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
 
     create(cesm_code_base, testing=False)
 
@@ -178,6 +172,7 @@ def create(cesm_code_base, testing=True, command=None):
             print '############################################'
             print ''
             case_name = os.path.basename(os.path.normpath(case_root))
+
             err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user "+svn_username+" --password --expType CMIP6")
             if err!=0:
                 print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
@@ -347,6 +342,8 @@ def create(cesm_code_base, testing=True, command=None):
             print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
             sys.exit()
 
+    # Toggle to build the case
+    build = 'False' #True or False
     print '############################################'
     print ''
     print '   Setup Cylc Automation'

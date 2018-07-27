@@ -91,7 +91,7 @@ pp_xml={
 def main(argv=None):
 
     # Location of cesm code base
-    cesm_code_base = '/glade2/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
+    cesm_code_base = '/glade/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
 
     create(cesm_code_base, testing=False)
 
@@ -160,7 +160,7 @@ def create(cesm_code_base, testing=True, command=None):
         if err!=0:
             print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
             sys.exit()
-        #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
+        #db_file = '/gpfs/fs1/work/mickelso/testing/CESM-WF/db.json' 
         db_file = case_root+"/archive_files/db.json"
 
         print '############################################'

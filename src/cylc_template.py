@@ -2,7 +2,7 @@ import os
 import json
 
 # The run commands to run each of the tasks
-commands = {'case_build': 'case.build', 'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive', 'case_lt_archive': 'case.lt_archive',
+commands = {'case_build': 'case.build', 'case_run': 'case.run.cylc', 'case_st_archive': 'case.st_archive.cylc', 'case_lt_archive': 'case.lt_archive',
             'xconform': 'postprocess/xconform',
             'timeseries': 'postprocess/timeseries', 
             'timeseriesL': 'postprocess/timeseriesL',

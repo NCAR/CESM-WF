@@ -34,7 +34,7 @@ cesm_realms = {
 variable_list = {
     "atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[]},
     "lnd,rof":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[],"h6":[], "h7":[], "h8":[]},
-    "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[],'h':[]},
     "ocn":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
     "ice":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
 }
@@ -194,7 +194,7 @@ def find_match(exp,site_string):
     out.write('! namelist_var = new_namelist_value \n')
     out.write('nhtfrq         =           0,  -24,  -6,  -3,  -1,   1\n')
     out.write('mfilt  = 1, 5, 20, 40, 120, 240 \n')
-    out.write('ndens  = 2, 2, 2, 2, 2, 2\n')
+    #out.write('ndens  = 2, 2, 2, 2, 2, 2\n')
 
     # site locations
     if len(variable_list["atm"]["subhrPt"])>0:
