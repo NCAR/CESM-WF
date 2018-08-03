@@ -341,6 +341,9 @@ class EnvCylc():
             self.env['ICEDIAG_BEGYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_DIFF', shell=True)
             self.env['ICEDIAG_ENDYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_DIFF', shell=True)
             self.env['ICEDIAG_DIFF_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_DIFF_TIMESERIES', shell=True)
+            self.env['ICEDIAG_BEGYR_CONT'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_CONT', shell=True)
+            self.env['ICEDIAG_ENDYR_CONT'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_CONT', shell=True)
+            self.env['ICEDIAG_YRS_TO_AVG'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_YRS_TO_AVG', shell=True)
 
         os.chdir(cwd)
 

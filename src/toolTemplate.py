@@ -264,28 +264,28 @@ class toolTemplate(object):
         # the tseries variable in the diag_atm file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_AVGS_ATM'] and 
+           ((env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit()) or
+           (',' in env['ATMDIAG_test_first_yr'] and ',' in  env['ATMDIAG_test_nyrs']))):
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
-            # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1  
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            # for the next year have been calculated).
+            if len(env['ATMDIAG_test_first_yr'].split(',')) == len(env['ATMDIAG_test_nyrs'].split(',')): 
+                b = env['ATMDIAG_test_first_yr'].split(',')
+                e = env['ATMDIAG_test_nyrs'].split(',')
+                for i in range(len(b)):          
+                    year = int(b[i]) + int(e[i])+1  
+                    date_s = string.zfill(str(year),4)+'-01-01'
+                    date_queue = [date_s]
 
-            if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
-                if 'TRUE' in env['ATMDIAG_TEST_TIMESERIES'] :
-                    dependancy = 'timeseries'
-                else:
-                    dependancy = 'case_st_archive'
-
-                specs['date_queue'] = date_queue
-                specs['dependancy'] = dependancy
-            else:
-                specs['date_queue'] = []
-                specs['dependancy'] = ''
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
-
+                    if self.check_djf(year, int(b[i]), env):
+                        if 'TRUE' in env['ATMDIAG_TEST_TIMESERIES'] :
+                            dependancy = 'timeseries'
+                        else:
+                            dependancy = 'case_st_archive'
+                        specs['date_queue'].append(date_s)
+                        specs['dependancy'] = dependancy
         return specs
 
 
@@ -293,25 +293,27 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_atm. It will be inserted after avg_atm.
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_ATM']  and 'TRUE' in env['GENERATE_AVGS_ATM'] and env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_DIAGS_ATM'] and 'TRUE' in env['GENERATE_AVGS_ATM'] and
+           ((env['ATMDIAG_test_first_yr'].isdigit() and env['ATMDIAG_test_nyrs'].isdigit()) or
+           (',' in env['ATMDIAG_test_first_yr'] and ',' in  env['ATMDIAG_test_nyrs']))):
             # Get the last year needed (this will be the yr+1 to make sure jan and feb 
-            # for the next year have been calculated). 
-            year = int(env['ATMDIAG_test_first_yr']) + int(env['ATMDIAG_test_nyrs'])+1 
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            # for the next year have been calculated).
+            if len(env['ATMDIAG_test_first_yr'].split(',')) == len(env['ATMDIAG_test_nyrs'].split(',')):
+                b = env['ATMDIAG_test_first_yr'].split(',')
+                e = env['ATMDIAG_test_nyrs'].split(',')
+                for i in range(len(b)):
+ 
+                    year = int(b[i]) + int(e[i])+1 
+                    date_s = string.zfill(str(year),4)+'-01-01'
+                    date_queue = [date_s]
 
-            if self.check_djf(year, int(env['ATMDIAG_test_first_yr']), env):
-                dependancy = 'atm_averages'
+                    if self.check_djf(year, int(b[i]), env):
+                        dependancy = 'atm_averages'
 
-                specs['date_queue'] = date_queue
-                specs['dependancy'] = dependancy
-            else:
-                specs['date_queue'] = []
-                specs['dependancy'] = ''
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
-
+                        specs['date_queue'].append(date_s)
+                        specs['dependancy'] = dependancy
         return specs
 
 
@@ -321,25 +323,30 @@ class toolTemplate(object):
         # the tseries variable in the diag_ocn file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_OCN'] and env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_AVGS_OCN'] and 
+            ((env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit()) or
+            (',' in env['OCNDIAG_YEAR1'] and ',' in env['OCNDIAG_TSERIES_YEAR1']))):
             # Get the last year needed
-            if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']): 
-                year = int(env['OCNDIAG_YEAR1'])+1 
-            else:
-                year = int(env['OCNDIAG_TSERIES_YEAR1'])+1 
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            if (len(env['OCNDIAG_YEAR0'].split(',')) == len(env['OCNDIAG_TSERIES_YEAR0'].split(',')) == 
+               len(env['OCNDIAG_YEAR1'].split(',')) == len(env['OCNDIAG_TSERIES_YEAR1'].split(','))): 
+                e1 = env['OCNDIAG_YEAR1'].split(',')
+                e2 = env['OCNDIAG_TSERIES_YEAR1'].split(',')
+                for i in range(len(e1)):
+                    if int(e1[i]) > int(e2[i]): 
+                        year = int(e1[i])+1 
+                    else:
+                        year = int(e2[i])+1 
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            if 'TRUE' in env['OCNDIAG_MODELCASE_INPUT_TSERIES'] :
-                dependancy = 'timeseries'
-            else:
-                dependancy = 'case_st_archive'
+                    if 'TRUE' in env['OCNDIAG_MODELCASE_INPUT_TSERIES'] :
+                        dependancy = 'timeseries'
+                    else:
+                        dependancy = 'case_st_archive'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                    specs['date_queue'].append(date_s)
+                    specs['dependancy'] = dependancy
 
         return specs
 
@@ -348,22 +355,29 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_ocn. It will be inserted after avg_ocn. 
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_OCN']  and 'TRUE' in env['GENERATE_AVGS_OCN'] and env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_DIAGS_OCN']  and 'TRUE' in env['GENERATE_AVGS_OCN'] and 
+            ((env['OCNDIAG_YEAR1'].isdigit() and env['OCNDIAG_TSERIES_YEAR1'].isdigit()) or
+            (',' in env['OCNDIAG_YEAR1'] and ',' in env['OCNDIAG_TSERIES_YEAR1']))):
             # Get the last year needed 
-            if int(env['OCNDIAG_YEAR1']) > int(env['OCNDIAG_TSERIES_YEAR1']):
-                year = int(env['OCNDIAG_YEAR1'])+1 
-            else:
-                year = int(env['OCNDIAG_TSERIES_YEAR1'])+1 
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            if (len(env['OCNDIAG_YEAR0'].split(',')) == len(env['OCNDIAG_TSERIES_YEAR0'].split(',')) ==
+               len(env['OCNDIAG_YEAR1'].split(',')) == len(env['OCNDIAG_TSERIES_YEAR1'].split(','))): 
+                e1 = env['OCNDIAG_YEAR1'].split(',')
+                e2 = env['OCNDIAG_TSERIES_YEAR1'].split(',')
+                for i in range(len(e1)):
+                    if int(e1[i]) > int(e2[i]):
+                        year = int(e1[i])+1
+                    else:
+                        year = int(e2[i])+1
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            dependancy = 'ocn_averages'
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                    dependancy = 'ocn_averages'
+
+                    specs['date_queue'].append(date_s)
+                    specs['dependancy'] = dependancy
 
         return specs
 
@@ -375,33 +389,40 @@ class toolTemplate(object):
         # the tseries variable in the diag_lnd file.  It will be inserted based on the last day 
         # needed for the diags. 
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+
+        if ('TRUE' in env['GENERATE_AVGS_LND'] and 
+            ((env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and 
+              env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit()) or
+              (',' in env['LNDDIAG_clim_first_yr_1'] and ',' in env['LNDDIAG_clim_num_yrs_1'] and 
+              ',' in env['LNDDIAG_trends_first_yr_1'] and ',' in env['LNDDIAG_trends_num_yrs_1']))):
             # Get the last year needed
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1'])+1 
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1'])+1 
-            if climYear > trendYear:
-                year = climYear
-                firstyr = int(env['LNDDIAG_clim_first_yr_1'])
-            else:
-                year = trendYear
-                firstyr = int(env['LNDDIAG_trends_first_yr_1'])
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            if (len(env['LNDDIAG_clim_first_yr_1'].split(',')) == len(env['LNDDIAG_clim_num_yrs_1'].split(',')) == 
+                len(env['LNDDIAG_trends_first_yr_1'].split(',')) == len(env['LNDDIAG_trends_num_yrs_1'].split(','))):
+                b1 = env['LNDDIAG_clim_first_yr_1'].split(',')
+                e1 = env['LNDDIAG_clim_num_yrs_1'].split(',')
+                b2 = env['LNDDIAG_trends_first_yr_1'].split(',')
+                e2 = env['LNDDIAG_trends_num_yrs_1'].split(',')
+                for i in range(len(b1)):
+                    climYear = int(b1[i]) + int(e1[i])+1 
+                    trendYear = int(b2[i]) + int(e2[i])+1 
+                    if climYear > trendYear:
+                        year = climYear
+                        firstyr = int(b1[i])
+                    else:
+                        year = trendYear
+                        firstyr = int(b2[i])
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            if self.check_djf(year, firstyr, env):
-                if 'TRUE' in env['LNDDIAG_CASE1_TIMESERIES'] :
-                    dependancy = 'timeseries'
-                else:
-                    dependancy = 'case_st_archive'
+                    if self.check_djf(year, firstyr, env):
+                        if 'TRUE' in env['LNDDIAG_CASE1_TIMESERIES'] :
+                            dependancy = 'timeseries'
+                        else:
+                            dependancy = 'case_st_archive'
 
-                specs['date_queue'] = date_queue
-                specs['dependancy'] = dependancy
-            else:
-                specs['date_queue'] = []
-                specs['dependancy'] = ''
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                        specs['date_queue'].append(date_s)
+                        specs['dependancy'] = dependancy
 
         return specs
 
@@ -411,30 +432,36 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_lnd. It will be inserted after avg_lnd.
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_LND']  and 'TRUE' in env['GENERATE_AVGS_LND'] and env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit():
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_DIAGS_LND']  and 'TRUE' in env['GENERATE_AVGS_LND'] and 
+            ((env['LNDDIAG_clim_first_yr_1'].isdigit() and env['LNDDIAG_clim_num_yrs_1'].isdigit() and 
+              env['LNDDIAG_trends_first_yr_1'].isdigit() and env['LNDDIAG_trends_num_yrs_1'].isdigit()) or
+              (',' in env['LNDDIAG_clim_first_yr_1'] and ',' in env['LNDDIAG_clim_num_yrs_1'] and      
+              ',' in env['LNDDIAG_trends_first_yr_1'] and ',' in env['LNDDIAG_trends_num_yrs_1']))):
             # Get the last year needed 
-            climYear = int(env['LNDDIAG_clim_first_yr_1']) + int(env['LNDDIAG_clim_num_yrs_1'])+1 
-            trendYear = int(env['LNDDIAG_trends_first_yr_1']) + int(env['LNDDIAG_trends_num_yrs_1'])+1 
-            if climYear > trendYear:
-                year = climYear
-                firstyr = int(env['LNDDIAG_clim_first_yr_1'])
-            else:
-                year = trendYear
-                firstyr = int(env['LNDDIAG_trends_first_yr_1'])
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+            if (len(env['LNDDIAG_clim_first_yr_1'].split(',')) == len(env['LNDDIAG_clim_num_yrs_1'].split(',')) ==
+                len(env['LNDDIAG_trends_first_yr_1'].split(',')) == len(env['LNDDIAG_trends_num_yrs_1'].split(','))):
+                b1 = env['LNDDIAG_clim_first_yr_1'].split(',')
+                e1 = env['LNDDIAG_clim_num_yrs_1'].split(',')
+                b2 = env['LNDDIAG_trends_first_yr_1'].split(',')
+                e2 = env['LNDDIAG_trends_num_yrs_1'].split(',')
+                for i in range(len(b1)):
+                    climYear = int(b1[i]) + int(e1[i])+1
+                    trendYear = int(b2[i]) + int(e2[i])+1
+                    if climYear > trendYear:
+                        year = climYear
+                        firstyr = int(b1[i])
+                    else:
+                        year = trendYear
+                        firstyr = int(b2[i])
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            if self.check_djf(year, firstyr, env):
-                dependancy = 'lnd_averages'
+                    if self.check_djf(year, firstyr, env):
+                        dependancy = 'lnd_averages'
          
-                specs['date_queue'] = date_queue
-                specs['dependancy'] = dependancy
-            else:
-                specs['date_queue'] = []
-                specs['dependancy'] = ''
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                        specs['date_queue'].append(date_s)
+                        specs['dependancy'] = dependancy
 
         return specs
 
@@ -444,21 +471,24 @@ class toolTemplate(object):
         # the tseries variable in the diag_ice file.  It will be inserted based on the last day 
         # needed for the diags.
         specs = {}
-        if 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
-            year = int(env['ICEDIAG_ENDYR_DIFF'])+1 
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_AVGS_ICE'] and 
+           ((env['ICEDIAG_ENDYR_DIFF'].isdigit() and env['ICEDIAG_BEGYR_DIFF'].isdigit()) or 
+           (',' in env['ICEDIAG_ENDYR_DIFF'] and ',' in env['ICEDIAG_BEGYR_DIFF']))):
+            if (len(env['ICEDIAG_ENDYR_DIFF'].split(',')) == len(env['ICEDIAG_BEGYR_DIFF'].split(','))):              
+                e = env['ICEDIAG_ENDYR_DIFF'].split(',')
+                for i in range(len(e)):
+                    year = int(e[i])+1 
+                    date_s = string.zfill(str(year),4)+'-01-01'
 
-            if 'TRUE' in env['ICEDIAG_DIFF_TIMESERIES'] :
-                dependancy = 'timeseries'
-            else:
-                dependancy = 'case_st_archive'
+                    if 'TRUE' in env['ICEDIAG_DIFF_TIMESERIES'] :
+                        dependancy = 'timeseries'
+                    else:
+                        dependancy = 'case_st_archive'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                    specs['date_queue'].append(date_s)
+                    specs['dependancy'] = dependancy
 
         return specs
 
@@ -466,18 +496,21 @@ class toolTemplate(object):
 
         # If the atm diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
         specs = {}
-        if 'TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] and env['ICEDIAG_ENDYR_DIFF'].isdigit():
-            year = int(env['ICEDIAG_ENDYR_DIFF'])+1
-            date_s = string.zfill(str(year),4)+'-01-01'
-            date_queue = [date_s]
+        specs['date_queue'] = []
+        specs['dependancy'] = ''
+        if ('TRUE' in env['GENERATE_DIAGS_ICE']  and 'TRUE' in env['GENERATE_AVGS_ICE'] and
+           ((env['ICEDIAG_ENDYR_DIFF'].isdigit() and env['ICEDIAG_BEGYR_DIFF'].isdigit()) or
+           (',' in env['ICEDIAG_ENDYR_DIFF'] and ',' in env['ICEDIAG_BEGYR_DIFF']))):
+            if (len(env['ICEDIAG_ENDYR_DIFF'].split(',')) == len(env['ICEDIAG_BEGYR_DIFF'].split(','))):
+                e = env['ICEDIAG_ENDYR_DIFF'].split(',')
+                for i in range(len(e)):
+                    year = int(e[i])+1
+                    date_s = string.zfill(str(year),4)+'-01-01' 
 
-            dependancy = 'ice_averages'
+                    dependancy = 'ice_averages'
 
-            specs['date_queue'] = date_queue
-            specs['dependancy'] = dependancy
-        else:
-            specs['date_queue'] = []
-            specs['dependancy'] = ''
+                    specs['date_queue'].append(date_s)
+                    specs['dependancy'] = dependancy
 
         return specs
 

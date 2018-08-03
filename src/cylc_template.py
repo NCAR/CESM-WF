@@ -32,10 +32,45 @@ def create_cylc_input(graph, env, path, queue):
     crf = os.path.basename(cr)
     print 'WRITING ',fn
 
+    f.write('#!Jinja2 \n')
+
+    # get dates
+    dates = {}
+    for t in graph:
+        task = t.get_id()
+        task_split = task.split('_')
+        tool = task_split[0]
+        if 'atm' in tool or 'ocn' in tool or 'lnd' in tool or 'ice' in tool or 'case' in tool:
+            tool = tool + '_' + task_split[1]
+            if 'archive' in task_split[2]:
+               tool = tool + '_' + task_split[2]
+        if tool not in dates.keys():
+            dates[tool] = [task_split[-1]]
+        else:
+            dates[tool].append(task_split[-1])
+  
+    # write out dates at the top of the suite.rc file
+    for tool in sorted(dates.keys()):
+        f.write('{% set dates_'+tool+' = '+str(dates[tool])+' %}\n')
+    f.write('{% set ATMDIAG_test_first_yr = ['+env['ATMDIAG_test_first_yr']+'] %}\n')
+    f.write('{% set ATMDIAG_test_nyrs = ['+env['ATMDIAG_test_nyrs']+'] %}\n')
+    f.write('{% set OCNDIAG_YEAR0 = ['+env['OCNDIAG_YEAR0']+'] %}\n')
+    f.write('{% set OCNDIAG_YEAR1 = ['+env['OCNDIAG_YEAR1']+'] %}\n')
+    f.write('{% set OCNDIAG_TSERIES_YEAR0 = ['+env['OCNDIAG_TSERIES_YEAR0']+'] %}\n')
+    f.write('{% set OCNDIAG_TSERIES_YEAR1 = ['+env['OCNDIAG_TSERIES_YEAR1']+'] %}\n')
+    f.write('{% set LNDDIAG_clim_first_yr_1 = ['+env['LNDDIAG_clim_first_yr_1']+'] %}\n')
+    f.write('{% set LNDDIAG_trends_first_yr_1 = ['+env['LNDDIAG_trends_first_yr_1']+'] %}\n')
+    f.write('{% set LNDDIAG_clim_num_yrs_1 = ['+env['LNDDIAG_clim_num_yrs_1']+'] %}\n')
+    f.write('{% set LNDDIAG_trends_num_yrs_1 = ['+env['LNDDIAG_trends_num_yrs_1']+'] %}\n')
+    f.write('{% set ICEDIAG_BEGYR_DIFF = ['+env['ICEDIAG_BEGYR_DIFF']+'] %}\n')
+    f.write('{% set ICEDIAG_ENDYR_DIFF = ['+env['ICEDIAG_ENDYR_DIFF']+'] %}\n')
+    f.write('{% set ICEDIAG_BEGYR_CONT = ['+env['ICEDIAG_BEGYR_CONT']+'] %}\n')
+    f.write('{% set ICEDIAG_ENDYR_CONT = ['+env['ICEDIAG_ENDYR_CONT']+'] %}\n')
+    f.write('{% set ICEDIAG_YRS_TO_AVG = ['+env['ICEDIAG_YRS_TO_AVG']+'] %}\n')
+
     if ensemble:
         count = int(env['end'])-int(env['start'])+1 
-        f.write('#!Jinja2 \n'+
-            '{% set MEMBERS = '+ str(count) +' %} \n'+
+        f.write('{% set MEMBERS = '+ str(count) +' %} \n'+
             'title = '+crf+'_'+env['start']+'-'+env['end']+' workflow \n')
     else:
         f.write('title = '+crf+' workflow \n')
@@ -103,68 +138,65 @@ def create_cylc_input(graph, env, path, queue):
         f.write('    {% for I in range('+env['start']+', '+str(int(env['end'])+1)+') %}\n')
         f.write('    {% set j = I | pad (3,\'0\') %}\n') 
     else:
-        f.write('        pre-script = \"cd '+cr+'\"\n')
-    if 'True' in env['build']:
-        if ensemble:
-            f.write('    [[case_build__{{I}} ]]\n')
-            f.write('    {% set d = \"'+cr+'.\" %}\n')
-            if 'cheyenne' in env['machine_name']:
-                f.write('        script = cd {{d}}{{j}};  qcmd -A '+env['PROJECT']+' {{d}}{{j}}/case.build\n')
-            else:
-                f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/case.build\n')
-        else:
-            f.write('    [[case_build]]\n')
-            if 'cheyenne' in env['machine_name']:
-                f.write('        script = qcmd -A '+env['PROJECT']+' '+cr+'/case.build\n')
-            else:
-                f.write('        script = '+cr+'/case.build\n')
-        if 'cheyenne' in env['machine_name']:
-            if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
-                if 'case_st_archive' in task:
-                    f.write('        [[[job]]]\n'+
-                        '                method = '+env['batch_type']+'\n'+
-                        '                execution time limit = PT1H\n'+
-                        '        [[[directives]]]\n')
-                else:
-                    f.write('        [[[job]]]\n'+
-                        '                method = '+env['batch_type']+'\n'+
-                        '                execution time limit = PT12H\n'+
-                        '        [[[directives]]]\n')
-            else: 
-                f.write('        [[[job]]]\n'+
-                        '                method = slurm\n'+
-                        '                execution time limit = PT12H\n'+
-                        '        [[[directives]]]\n')
-            for d,i in enumerate(env['directives']['case_st_archive']):
-                if 'select' in d:
-                    env['directives']['case_st_archive'][i] = env['directives']['case_st_archive'][i]+',inception=login'
-        else:
-            f.write('        [[[job]]]\n'+
-                    '                method = '+env['batch_type']+'\n'+
-                    '        [[[directives]]]\n')
-        for d in env['directives']['case_st_archive']:
-                f.write('                '+d+'\n')
-        f.write('        [[[event hooks]]]\n'+
-                '                started handler = cylc email-suite\n'+
-                '                succeeded handler = cylc email-suite\n'+
-                '                failed handler = cylc email-suite\n')
+        #f.write('        pre-script = \"cd '+cr+'\"\n')
+        f.write('        [[[environment]]]\n')
 
-    for t in graph:
-        task = t.get_id()
-        task_split = task.split('_')
-        tool = task_split[0]
-        if 'atm' in tool or 'ocn' in tool or 'lnd' in tool or 'ice' in tool or 'case' in tool:
-            tool = tool + '_' + task_split[1]
-            if 'archive' in task_split[2]:
-               tool = tool + '_' + task_split[2] 
-        #print '****',tool
+    for t in sorted(dates.keys()):
+        f.write('        {% for i in range(0,dates_'+t+'|length) %}\n')
         if ensemble:
-            f.write('    [['+task+'__{{I}} ]]\n')
+            f.write('    [['+t+'_{{dates_'+t+'[i]}}__{{I}} ]]\n')
             f.write('    {% set d = \"'+cr+'.\" %}\n')
-            f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/'+commands[tool]+'\n')
+            pp = ''
+            if 'averages' in t:
+                if 'atm' in t:
+                    pp = pp+'./pp_config --set ATMDIAG_test_first_yr={{ATMDIAG_test_first_yr[i]}}; '
+                    pp = pp+'./pp_config --set ATMDIAG_test_nyrs={{ATMDIAG_test_nyrs[i]}}; '
+                elif 'ocn' in t:
+                    pp = pp+'./pp_config --set OCNDIAG_YEAR0={{OCNDIAG_YEAR0[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_YEAR1={{OCNDIAG_YEAR1[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_TSERIES_YEAR0={{OCNDIAG_TSERIES_YEAR0[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_TSERIES_YEAR1={{OCNDIAG_TSERIES_YEAR1[i]}}; '
+                elif 'lnd' in t:
+                    pp = pp+'./pp_config --set LNDDIAG_clim_first_yr_1={{LNDDIAG_clim_first_yr_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_trends_first_yr_1={{LNDDIAG_trends_first_yr_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_clim_num_yrs_1={{LNDDIAG_clim_num_yrs_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_trends_num_yrs_1={{LNDDIAG_trends_num_yrs_1[i]}}; '
+                elif 'ice' in t:
+                    pp = pp+'./pp_config --set ICEDIAG_BEGYR_DIFF={{ICEDIAG_BEGYR_DIFF[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_ENDYR_DIFF={{ICEDIAG_ENDYR_DIFF[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_BEGYR_CONT={{ICEDIAG_BEGYR_CONT[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_ENDYR_CONT={{ICEDIAG_ENDYR_CONT[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_YRS_TO_AVG={{ICEDIAG_YRS_TO_AVG[i]}}; '
+                f.write('        script = cd {{d}}{{j}}/postprocess/; '+pp+' {{d}}{{j}}/'+commands[t]+'\n')
+            else:
+                f.write('        script = cd {{d}}{{j}}; {{d}}{{j}}/'+commands[t]+'\n')
         else:
-            f.write('    [['+task+' ]]\n')
-            f.write('        script = '+cr+'/'+commands[tool]+'\n')
+            f.write('        [['+t+'_{{dates_'+t+'[i]}} ]]\n')
+            pp = ''
+            if 'averages' in t:
+                if 'atm' in t:
+                    pp = pp+'./pp_config --set ATMDIAG_test_first_yr={{ATMDIAG_test_first_yr[i]}}; '
+                    pp = pp+'./pp_config --set ATMDIAG_test_nyrs={{ATMDIAG_test_nyrs[i]}}; '
+                elif 'ocn' in t:
+                    pp = pp+'./pp_config --set OCNDIAG_YEAR0={{OCNDIAG_YEAR0[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_YEAR1={{OCNDIAG_YEAR1[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_TSERIES_YEAR0={{OCNDIAG_TSERIES_YEAR0[i]}}; '
+                    pp = pp+'./pp_config --set OCNDIAG_TSERIES_YEAR1={{OCNDIAG_TSERIES_YEAR1[i]}}; '
+                elif 'lnd' in t:
+                    pp = pp+'./pp_config --set LNDDIAG_clim_first_yr_1={{LNDDIAG_clim_first_yr_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_trends_first_yr_1={{LNDDIAG_trends_first_yr_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_clim_num_yrs_1={{LNDDIAG_clim_num_yrs_1[i]}}; '
+                    pp = pp+'./pp_config --set LNDDIAG_trends_num_yrs_1={{LNDDIAG_trends_num_yrs_1[i]}}; '
+                elif 'ice' in t:
+                    pp = pp+'./pp_config --set ICEDIAG_BEGYR_DIFF={{ICEDIAG_BEGYR_DIFF[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_ENDYR_DIFF={{ICEDIAG_ENDYR_DIFF[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_BEGYR_CONT={{ICEDIAG_BEGYR_CONT[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_ENDYR_CONT={{ICEDIAG_ENDYR_CONT[i]}}; '
+                    pp = pp+'./pp_config --set ICEDIAG_YRS_TO_AVG={{ICEDIAG_YRS_TO_AVG[i]}}; '
+
+                f.write('        script = cd '+cr+'/postprocess/; '+pp+' '+cr+'/'+commands[t]+'\n')
+            else:
+                f.write('        script = cd '+cr+'; '+cr+'/'+commands[t]+'\n')
 
         if 'cheyenne' in env['machine_name']:
             if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
@@ -188,21 +220,22 @@ def create_cylc_input(graph, env, path, queue):
                     '                method = '+env['batch_type']+'\n'+
                     '        [[[directives]]]\n')
 
-        if tool == 'timeseriesL':
+        if t == 'timeseriesL':
             for d in env['directives']['timeseries']:
                 f.write('                '+d+'\n')
-        elif tool == 'case_run':
+        elif t == 'case_run':
             for d in env['directives']['case_run']:
                 if '-q' in d and 'None' not in queue:
                     d = d.replace(d.split()[-1],queue)    
                 f.write('                '+d+'\n')
         else:
-            for d in env['directives'][tool]:
+            for d in env['directives'][t]:
                 f.write('                '+d+'\n')
         f.write('        [[[event hooks]]]\n'+
                 '                started handler = cylc email-suite\n'+
                 '                succeeded handler = cylc email-suite\n'+
                 '                failed handler = cylc email-suite\n')
+        f.write('    {% endfor %}\n')
     if ensemble:
         f.write('    {% endfor %}\n')            
  
