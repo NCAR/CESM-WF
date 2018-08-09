@@ -12,7 +12,8 @@ run_type = "CAM"
 ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","plev8","plev10",
           "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",'land1d_active', 'land1d_wtgcell',
           "lon","lat","P0",'grid1d_ixy', 'grid1d_jxy', 'grid1d_lat', 'grid1d_lon', 'land1d_ityplunit', 'landUse',
-          'land1d_lat', 'land1d_lon', 'pfts1d_active', 'pfts1d_itype_veg', 'pfts1d_lat', 'pfts1d_lon', 'pfts1d_wtgcell', 'pfts1d_wtlunit']          
+          'land1d_lat', 'land1d_lon', 'pfts1d_active', 'pfts1d_itype_veg', 'pfts1d_lat', 'pfts1d_lon', 'pfts1d_wtgcell', 'pfts1d_wtlunit',
+          'I', 'i', 'j', 'k', 'nlon', 'nlat', 'basin']          
 
 cmip6_realms = {
 	"aerosol":"atm",
@@ -21,7 +22,7 @@ cmip6_realms = {
         "land":"lnd,rof",
         "landIce":"glc",
         "ocean":"ocn",
-        "ocnBgchem":"ocn",
+        "ocnBgchem":"bgc",
         "seaIce":"ice"
 }
 cesm_realms = {
@@ -36,6 +37,7 @@ variable_list = {
     "lnd,rof":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[],"h6":[], "h7":[], "h8":[]},
     "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[],'h':[]},
     "ocn":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "bgc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
     "ice":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
 }
 
@@ -138,6 +140,7 @@ def find_match(exp,site_string):
                 r = var_defs[j][split[0]]["realm"]
                 f = var_defs[j][split[0]]["freq"]
                 for v1 in v:
+                    found = False
                     stream = ["zzzzzzzz","zzzzzzzz"]
                     for k in jd.keys():
                       if "definition" in jd[k].keys():
@@ -149,6 +152,7 @@ def find_match(exp,site_string):
                                 else:
                                     vr=v1
                                 variable_list[cesm_realms[stream[0]]][stream[1]] = [vr]
+                                found = True
                             else:
                                 if v1 not in variable_list[cesm_realms[stream[0]]][stream[1]] and v1 not in ignore:
                                     if 'Pt' in f:
@@ -156,9 +160,17 @@ def find_match(exp,site_string):
                                     else:
                                         vr=v1
                                     variable_list[cesm_realms[stream[0]]][stream[1]].append(vr)
+                                    found = True
+                            if v1 in variable_list[cesm_realms[stream[0]]][stream[1]]:
+                                found = True
                         #elif v1 in jd[k]["definition"] and v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
-                        elif v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
+                        elif v1 in jd[k]["definition"] and v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
                             variable_list[cmip6_realms[r]][f].append(v1)
+                            found = True
+                        elif v1 in variable_list[cmip6_realms[r]][f]:
+                            found = True
+                    if not found and v1 not in ignore:
+                        print v1,r,f 
 
     total = 0
     out = open("CESM_VARS_NEEDED_"+exp+"_"+datetime.now().strftime('%Y%m%d_%H%M%S')+".out","w")
@@ -289,6 +301,38 @@ def find_match(exp,site_string):
     out.write('f_CMIP = \'mdxxx\'\n')
     out.close()
 
+    # create cmip6_tavg_contents
+    out = open("cmip6_tavg_contents","w")
+    # monthly
+    for v in sorted(variable_list["ocn"]["mon"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["monC"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["monPt"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["yr"]):
+        if v not in variable_list["ocn"]["mon"] and v not in variable_list["ocn"]["monC"] and v not in variable_list["ocn"]["monPt"]:
+            out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["yrPt"]):
+        if v not in variable_list["ocn"]["mon"] and v not in variable_list["ocn"]["monC"] and v not in variable_list["ocn"]["monPt"]:
+            out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["mon"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["monC"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["monPt"]):
+        out.write("1  "+v+"\n")
+    # daily
+    for v in sorted(variable_list["ocn"]["day"]):
+        out.write("2  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["day"]):
+        out.write("4  "+v+"\n")
+    # annual
+    for v in sorted(variable_list["bgc"]["yr"]):
+        out.write("5  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["yrPt"]):
+        out.write("5  "+v+"\n")    
+    out.close()
 
     # create user_nl_clm
     out = open("user_nl_clm.fincls", "w")

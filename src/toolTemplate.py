@@ -494,7 +494,7 @@ class toolTemplate(object):
 
     def  diag_ice_specs(self, env):
 
-        # If the atm diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
+        # If the ice diags will be ran, it will depend on avg_ice. It will be inserted after avg_ice. 
         specs = {}
         specs['date_queue'] = []
         specs['dependancy'] = ''
