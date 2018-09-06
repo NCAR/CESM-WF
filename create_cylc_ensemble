@@ -7,7 +7,9 @@ import json
 for i in range(0, len(sys.argv)):
     if '-case' in sys.argv[i]:
         case_root = sys.argv[i+1]
-
+        casename = os.path.basename(sys.argv[i+1])
+    elif '-compset' in sys.argv[i]:
+        compset = sys.argv[i+1]
 
 #############################################################################
 #
@@ -88,7 +90,11 @@ pp_xml={
        'ICEDIAG_BEGYR_CONT': '2',
        'ICEDIAG_ENDYR_CONT': '4',
        'ICEDIAG_DIFF_TIMESERIES': 'FALSE',
-       'ICEDIAG_YRS_TO_AVG': '2'
+       'ICEDIAG_YRS_TO_AVG': '2',
+       'USER_NAME': 'cmip6',
+       'GLOBAL_WEBHOST': 'burnt.cgd.ucar.edu',
+       'GLOBAL_WEBLOGIN': 'cmip6',
+       'GLOBAL_REMOTE_WEBDIR': '/project/diagnostics/external/'+compset+'/'+casename+'/'
        }
 
 

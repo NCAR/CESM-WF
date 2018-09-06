@@ -274,6 +274,7 @@ class EnvCylc():
             elif choice == 'N' or choice == 'n':
                 valid = True
                 user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
+                self.env['RUN_STARTDATE'] = user_date
         #case.set_value("RUN_WITH_SUBMIT", True)
        
         if os.path.isdir(my_case+'/postprocess/'):

@@ -117,8 +117,12 @@ def create_cylc_input(graph, env, path, queue):
             for i in range(0,len(t.depends)):
                 if ensemble:
                     d = d + t.depends[i]+'__{{I}}'
+                    if 'diagnostics' in t.depends[i]:
+                        d = d + ' => ' + t.depends[i]+'_post__{{I}}'
                 else:
                     d = d + t.depends[i]
+                    if 'diagnostics' in t.depends[i]:
+                        d = d + ' => ' + t.depends[i]+'_post'
                 if i < len(t.depends)-1:
                     d = d + ' & '           
             f.write('                    '+d+'\n')
@@ -200,10 +204,16 @@ def create_cylc_input(graph, env, path, queue):
 
         if 'cheyenne' in env['machine_name']:
             if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
-                if 'case_st_archive' in task:
+                if 'case_st_archive' in t:
                         f.write('        [[[job]]]\n'+
                         '                method = '+env['batch_type']+'\n'+
                         '                execution time limit = PT1H\n'+
+                        '        [[[directives]]]\n')
+                elif 'case_run' in t:
+                        f.write('        [[[job]]]\n'+
+                        '                method = '+env['batch_type']+'\n'+
+                        '                execution time limit = PT12H\n'+
+                        '                execution retry delays = PT30S, PT120S, PT600S\n'+
                         '        [[[directives]]]\n')
                 else:
                         f.write('        [[[job]]]\n'+
@@ -235,7 +245,20 @@ def create_cylc_input(graph, env, path, queue):
                 '                started handler = cylc email-suite\n'+
                 '                succeeded handler = cylc email-suite\n'+
                 '                failed handler = cylc email-suite\n')
-        f.write('    {% endfor %}\n')
+        f.write('        {% endfor %}\n')
+
+        if 'diagnostics' in t:
+            f.write('\n\n')
+            f.write('        {% for i in range(0,dates_'+t+'|length) %}\n')
+            if ensemble:
+                f.write('    [['+t+'_{{dates_'+t+'[i]}}_post__{{I}} ]]\n')
+                f.write('    {% set d = \"'+cr+'.\" %}\n')
+                f.write('    script = cd {{d}}{{j}}/postprocess/; {{d}}{{j}}/postprocess/copy_html\n') 
+            else:
+                f.write('        [['+t+'_{{dates_'+t+'[i]}}_post ]]\n')            
+                f.write('        script = cd '+cr+'/postprocess/; '+cr+'/postprocess/copy_html\n')
+            f.write('        {% endfor %}\n')
+        f.write('\n\n')
     if ensemble:
         f.write('    {% endfor %}\n')            
  
