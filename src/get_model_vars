@@ -358,7 +358,7 @@ def find_match(exp,site_string):
 
     # fincl1 -- monthly
     #fincl1 -- month
-    out.write('fincl1 = ')
+    out.write('hist_fincl1 = ')
     for v in sorted(variable_list["lnd,rof"]["mon"]):
         out.write("\'"+v+"\', ")
     for v in sorted(variable_list["lnd,rof"]["monC"]):
@@ -370,19 +370,19 @@ def find_match(exp,site_string):
     out.write('\n\n')
 
     # fincl2 -- monthly
-    out.write('fincl2 = ')
+    out.write('hist_fincl2 = ')
     for v in sorted(variable_list["lnd,rof"]["h1"]):
         out.write("\'"+v+"\', ")
     out.write('\n\n')
 
     # fincl3 -- monthly
-    out.write('fincl3 = ')
+    out.write('hist_fincl3 = ')
     for v in sorted(variable_list["lnd,rof"]["h2"]):
         out.write("\'"+v+"\', ")
     out.write('\n\n')
 
     # fincl4 -- yearly
-    out.write('fincl4 = ')
+    out.write('hist_fincl4 = ')
     for v in sorted(variable_list["lnd,rof"]["yr"]):
         out.write("\'"+v+"\', ")
     for v in sorted(variable_list["lnd,rof"]["yrPt"]):
@@ -392,7 +392,7 @@ def find_match(exp,site_string):
     out.write('\n\n')
 
     # fincl5 -- day
-    out.write('fincl5 = ')
+    out.write('hist_fincl5 = ')
     for v in sorted(variable_list["lnd,rof"]["day"]):
         out.write("\'"+v+"\', ")
     for v in sorted(variable_list["lnd,rof"]["h4"]):
@@ -400,13 +400,13 @@ def find_match(exp,site_string):
     out.write('\n\n')
 
     # fincl6 -- day
-    out.write('fincl6 = ')
+    out.write('hist_fincl6 = ')
     for v in sorted(variable_list["lnd,rof"]["h5"]):
         out.write("\'"+v+"\', ")
     out.write('\n\n')
 
     # fincl7 -- hourly
-    out.write('fincl7 = ')
+    out.write('hist_fincl7 = ')
     for v in sorted(variable_list["lnd,rof"]["3hr"]):
         out.write("\'"+v+"\', ")
     for v in sorted(variable_list["lnd,rof"]["3hrPt"]):
@@ -418,12 +418,12 @@ def find_match(exp,site_string):
     out.write('\n\n')
 
     # fincl8 -- day (requested by lmwg)
-    out.write('fincl8 = ')
+    out.write('hist_fincl8 = ')
     out.write("\'FIRE:X\', ")
     out.write('\n\n')
 
     # fincl9 -- day (requested by lmwg)
-    out.write('fincl9 = ')
+    out.write('hist_fincl9 = ')
     out.write("\'FIRE:M\', ")
     out.write('\n\n')
 
