@@ -62,7 +62,7 @@ cesm_xml={
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
-       'TIMESERIES_OUTPUT_ROOTDIR': '/glade/scratch/cmip6/TIMESERIES/'+case_root.split('/')[-1],
+       'TIMESERIES_OUTPUT_ROOTDIR': '/gpfs/fs1/collections/cdg/timeseries-cmip6/'+case_root.split('/')[-1],
        'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
@@ -228,7 +228,10 @@ def create(cesm_code_base, testing=True, command=None):
 		sys.exit()
 	if os.path.isdir(case_root+'/postprocess/'):
 	    os.chdir(case_root+'/postprocess/')
+            pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/collections/cdg/cmip6/'+str(db_info["case_id"])+"/"
 	    for k,v in pp_xml.iteritems():
+                if 'TIMESERIES_OUTPUT_ROOTDIR' in k:
+                    v = v+'.'+n
 		print 'Setting ',k,' to ',v
 		err=os.system('./pp_config --set '+k+'='+v)
 		if err!=0:
