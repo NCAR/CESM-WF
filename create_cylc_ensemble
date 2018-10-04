@@ -94,7 +94,7 @@ pp_xml={
        'USER_NAME': 'cmip6',
        'GLOBAL_WEBHOST': 'burnt.cgd.ucar.edu',
        'GLOBAL_WEBLOGIN': 'cmip6',
-       'GLOBAL_REMOTE_WEBDIR': '/project/diagnostics/external/'+compset+'/'+casename+'/'
+       'GLOBAL_REMOTE_WEBDIR': '/project/diagnostics/external/'+compset+'/'+casename
        }
 
 
@@ -232,6 +232,8 @@ def create(cesm_code_base, testing=True, command=None):
 	    for k,v in pp_xml.iteritems():
                 if 'TIMESERIES_OUTPUT_ROOTDIR' in k:
                     v = v+'.'+n
+                elif 'GLOBAL_REMOTE_WEBDIR' in k:
+                    v = v+'.'+n+'/'
 		print 'Setting ',k,' to ',v
 		err=os.system('./pp_config --set '+k+'='+v)
 		if err!=0:
