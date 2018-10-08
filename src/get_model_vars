@@ -13,7 +13,7 @@ ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","pl
           "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",'land1d_active', 'land1d_wtgcell',
           "lon","lat","P0",'grid1d_ixy', 'grid1d_jxy', 'grid1d_lat', 'grid1d_lon', 'land1d_ityplunit', 'landUse',
           'land1d_lat', 'land1d_lon', 'pfts1d_active', 'pfts1d_itype_veg', 'pfts1d_lat', 'pfts1d_lon', 'pfts1d_wtgcell', 'pfts1d_wtlunit',
-          'I', 'i', 'j', 'k', 'nlon', 'nlat', 'basin']          
+          'I', 'i', 'j', 'k', 'nlon', 'nlat', 'basin', 'soilpools']          
 
 cmip6_realms = {
 	"aerosol":"atm",
