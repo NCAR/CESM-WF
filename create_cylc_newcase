@@ -209,7 +209,8 @@ def create(cesm_code_base, testing=True, command=None):
 	    sys.exit()
     if os.path.isdir(case_root+'/postprocess/'):
 	os.chdir(case_root+'/postprocess/')
-        pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/collections/cdg/cmip6/'+str(db_info["case_id"])+"/"
+        #pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/collections/cdg/cmip6/'+str(db_info["case_id"])+"/"
+        pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/scratch/cmip6/archive/CMIP6_DATA/'+case_root.split('/')[-1]
 	for k,v in pp_xml.iteritems():
 	    print 'Setting ',k,' to ',v
 	    err=os.system('./pp_config --set '+k+'='+v)
