@@ -37,6 +37,8 @@ def parseArgs(argv = None):
                         help='machine to run postprocessing on', required=False)
     parser.add_argument('-q','--queue',default='default',type=str,
                         help='user specified queue, non default', required=False)
+    parser.add_argument('-x','--exp_name',default='default',type=str,
+                        help='name of the cmip6 exp name', required=False)
 
     return parser.parse_args(argv)
 
@@ -93,9 +95,9 @@ def create_new_run_script(ensemble_basename, start, end, svn_username):
         f_new = open(casedir+'/case.st_archive.cylc','w')
         f_old = open(casedir+'/case.st_archive','r')
         for line in f_old:
-            #if 'sys.exit' in line:
-            #    arch_meta = "os.system(\"./archive_metadata --user "+svn_username+" --password --expType CMIP6\")"
-            #    f_new.write('    '+arch_meta+'\n')
+            if 'sys.exit' in line:
+                arch_meta = "os.system(\"./archive_metadata --user "+svn_username+" --password --expType CMIP6\")"
+                f_new.write('    '+arch_meta+'\n')
             f_new.write(line)
         f_new.close()
         f_old.close()
@@ -211,7 +213,7 @@ def main(argv=None):
 
     g = graph.create_graph(keys,template)
 
-    cylc_template.create_cylc_input(g, env, args.path, args.queue)
+    cylc_template.create_cylc_input(g, env, args.path, args.queue, args.exp_name)
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 

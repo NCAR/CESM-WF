@@ -373,7 +373,7 @@ def create(cesm_code_base, testing=True, command=None):
     case_name = os.path.basename(os.path.normpath(first_case_root))
     case_name_base = case_name[:-4]
     uid = str(ensemble_start)+'-'+str(ensemble_end)
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite.cmip6'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite.cmip6'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+' -x '+exp_name)
 
     os.chdir(cdir)
 
