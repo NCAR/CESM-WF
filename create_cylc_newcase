@@ -42,6 +42,7 @@ ppmach = 'cheyenne'
 WACCM_RUN = False 
 HIRES_RUN = False
 CLM_RUN = False
+FV2_RUN = False
 
 # Add a specific queue to use.  Set to 'None' if you want the default.  Set to 'queue name' if you want a specific queue.
 queue = 'None'
@@ -290,6 +291,20 @@ def create(cesm_code_base, testing=True, command=None):
                 print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
                 print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
                 sys.exit()
+        if FV2_RUN:
+            if WACCM_RUN:
+                err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def')
+                err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_WACCM_FV2.ga')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
+                    sys.exit()
+            else:
+                err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_FV2.ga')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
+                    sys.exit()
  
         with open(db_file) as db:
             db_info = json.load(db)
