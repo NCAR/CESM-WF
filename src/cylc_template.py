@@ -12,7 +12,7 @@ commands = {'case_build': 'case.build', 'case_run': 'case.run.cylc', 'case_st_ar
             'ice_averages': 'postprocess/ice_averages', 'ice_diagnostics': 'postprocess/ice_diagnostics'}
 
 
-def create_cylc_input(graph, env, path, queue):
+def create_cylc_input(graph, env, path, queue, exp_name):
 
     if env['start'] != env['end']:
         ensemble=True
@@ -236,7 +236,9 @@ def create_cylc_input(graph, env, path, queue):
         elif t == 'case_run':
             for d in env['directives']['case_run']:
                 if '-q' in d and 'None' not in queue:
-                    d = d.replace(d.split()[-1],queue)    
+                    d = d.replace(d.split()[-1],queue)
+                elif '-N' in d:
+                    d = d.replace(d.split()[-1],exp_name)    
                 f.write('                '+d+'\n')
         else:
             for d in env['directives'][t]:
