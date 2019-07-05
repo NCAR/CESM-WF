@@ -71,8 +71,10 @@ def create_cylc_input(graph, env, path, queue, exp_name):
     if ensemble:
         count = int(env['end'])-int(env['start'])+1 
         f.write('{% set MEMBERS = '+ str(count) +' %} \n'+
+            '[meta] \n'+
             'title = '+crf+'_'+env['start']+'-'+env['end']+' workflow \n')
     else:
+        f.write('[meta] \n')
         f.write('title = '+crf+' workflow \n')
 
     if ensemble:
@@ -85,7 +87,7 @@ def create_cylc_input(graph, env, path, queue, exp_name):
     f.write('[cylc]\n'+
             '    [[environment]]\n'+
             '        MAIL_ADDRESS='+env['email']+'\n'+
-            '    [[event hooks]]\n'+
+            '    [[events]]\n'+
             '        shutdown handler = cylc email-suite\n')
 
     # add dependencies
@@ -206,28 +208,28 @@ def create_cylc_input(graph, env, path, queue, exp_name):
             if 'case_run' in task or 'case_st_archive' in task or 'geyser' not in env['pp_machine_name'] or 'caldera' not in env['pp_machine_name']:
                 if 'case_st_archive' in t:
                         f.write('        [[[job]]]\n'+
-                        '                method = '+env['batch_type']+'\n'+
+                        '                batch system = '+env['batch_type']+'\n'+
                         '                execution time limit = PT1H\n'+
                         '        [[[directives]]]\n')
                 elif 'case_run' in t:
                         f.write('        [[[job]]]\n'+
-                        '                method = '+env['batch_type']+'\n'+
+                        '                batch system = '+env['batch_type']+'\n'+
                         '                execution time limit = PT12H\n'+
                         '                execution retry delays = PT30S, PT120S, PT600S\n'+
                         '        [[[directives]]]\n')
                 else:
                         f.write('        [[[job]]]\n'+
-                        '                method = '+env['batch_type']+'\n'+
+                        '                batch system = '+env['batch_type']+'\n'+
                         '                execution time limit = PT12H\n'+
                         '        [[[directives]]]\n')
             else:
                 f.write('        [[[job]]]\n'+
-                        '                method = slurm\n'+
+                        '                batch system = slurm\n'+
                         '        [[[directives]]]\n')
 
         else:
             f.write('        [[[job]]]\n'+
-                    '                method = '+env['batch_type']+'\n'+
+                    '                batch system = '+env['batch_type']+'\n'+
                     '        [[[directives]]]\n')
 
         if t == 'timeseriesL':
@@ -243,7 +245,7 @@ def create_cylc_input(graph, env, path, queue, exp_name):
         else:
             for d in env['directives'][t]:
                 f.write('                '+d+'\n')
-        f.write('        [[[event hooks]]]\n'+
+        f.write('        [[[events]]]\n'+
                 '                started handler = cylc email-suite\n'+
                 '                succeeded handler = cylc email-suite\n'+
                 '                failed handler = cylc email-suite\n')
