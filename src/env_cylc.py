@@ -136,9 +136,9 @@ class EnvCylc():
         
         num_nodes = case.num_nodes
         bjobs = batch.get_batch_jobs()
-        for job, jsect in bjobs:
-            job_ = str.replace(job,'.','_')
-            directives[job_] = []
+#        for job, jsect in bjobs:
+#            job_ = str.replace(job,'.','_')
+#            directives[job_] = []
 
             #task_count = jsect["task_count"]
             #task_count = env_batch.get_value("task_count", subgroup=job)
@@ -221,25 +221,47 @@ class EnvCylc():
 #                            directives[job_].append(d[0]+' = '+d[1])
 
 #### Start temp code to get pbs directives from case.run
-            if 'st_archive' in job_:
-                directives[job_].append("-A = "+os.getenv('PROJECT'))
-                directives[job_].append("-q = regular")
-                with open(my_case+"/case.st_archive") as f:
-                    for l in f:
-                        if '#PBS' in l:
-                            pbs_split = l.split()
-                            if len(pbs_split) == 3:
-                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
-            else:
-                with open(my_case+"/.case.run") as f:
-                    directives[job_].append("-A = "+os.getenv('PROJECT'))
-                    directives[job_].append("-q = regular")
-                    for l in f:
-                        if '#PBS' in l:
-                            pbs_split = l.split()
-                            if len(pbs_split) == 3:
-                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+#directives[job_] = []
+#            if 'st_archive' in job_:
+#                directives[job_].append("-A = "+os.getenv('PROJECT'))
+#                directives[job_].append("-q = regular")
+#                with open(my_case+"/case.st_archive") as f:
+#                    for l in f:
+#                        if '#PBS' in l:
+#                            pbs_split = l.split()
+#                            if len(pbs_split) == 3:
+#                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+#            else:
+#                print '***************************'
+#                print 'Opening '+my_case+"/.case.run"
+#                print '***************************'
+#                with open(my_case+"/.case.run") as f:
+#                    directives[job_].append("-A = "+os.getenv('PROJECT'))
+#                    directives[job_].append("-q = regular")
+#                    for l in f:
+#                        if '#PBS' in l:
+#                            pbs_split = l.split()
+#                            if len(pbs_split) == 3:
+#                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+        directives['case_st_archive'] = []
+        directives['case_st_archive'].append("-A = "+os.getenv('PROJECT'))
+        directives['case_st_archive'].append("-q = regular")
+        with open(my_case+"/case.st_archive") as f:
+            for l in f:
+                if '#PBS' in l:
+                    pbs_split = l.split()
+                    if len(pbs_split) == 3:
+                        directives['case_st_archive'].append(pbs_split[1]+" = "+pbs_split[2])
 
+        directives['case_run'] = []
+        with open(my_case+"/.case.run") as f:
+            directives['case_run'].append("-A = "+os.getenv('PROJECT'))
+            directives['case_run'].append("-q = regular")
+            for l in f:
+               if '#PBS' in l:
+                    pbs_split = l.split()
+                    if len(pbs_split) == 3:
+                        directives['case_run'].append(pbs_split[1]+" = "+pbs_split[2])
 
 #### End temp code to get pbs directives from case.run
 
