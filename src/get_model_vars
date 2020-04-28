@@ -1,0 +1,465 @@
+#! /usr/bin/env python
+
+import os, fnmatch, json, glob
+import subprocess
+import argparse
+from datetime import datetime
+
+run_type = "CAM"
+#run_type = "WACCM"
+#run_type = "HIRES"
+
+ignore = ["time","plev3","plev3h","plev4s","plev4","plev5","plev7h","plev7c","plev8","plev10",
+          "plev11","plev14","plev17","plev19","plev23","plev27","plev39","hyam","hybm","alevel",'land1d_active', 'land1d_wtgcell',
+          "lon","lat","P0",'grid1d_ixy', 'grid1d_jxy', 'grid1d_lat', 'grid1d_lon', 'land1d_ityplunit', 'landUse',
+          'land1d_lat', 'land1d_lon', 'pfts1d_active', 'pfts1d_itype_veg', 'pfts1d_lat', 'pfts1d_lon', 'pfts1d_wtgcell', 'pfts1d_wtlunit',
+          'I', 'i', 'j', 'k', 'nlon', 'nlat', 'basin', 'soilpools']          
+
+cmip6_realms = {
+	"aerosol":"atm",
+        "atmos":"atm",
+        "atmosChem":"atm",
+        "land":"lnd,rof",
+        "landIce":"glc",
+        "ocean":"ocn",
+        "ocnBgchem":"bgc",
+        "seaIce":"ice"
+}
+cesm_realms = {
+        "cam":"atm",
+        "clm2":"lnd,rof",
+        "cism":"glc",
+        "pop":"ocn",
+        "cice":"ice",
+        "mosart":"lnd,rof"
+}
+variable_list = {
+    "atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[]},
+    "lnd,rof":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[], "h0":[], "h1":[], "h2":[], "h3":[], "h4":[], "h5":[],"h6":[], "h7":[], "h8":[]},
+    "glc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[],'h':[]},
+    "ocn":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "bgc":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]},
+    "ice":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
+}
+
+def parseArgs(argv = None):
+
+    """Process the command line arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description='get_model_vars: prints out the variables that need to be outputted by the model to complete the request.')
+
+    parser.add_argument('-e', '--exp', default='None', type=str,
+                        help='The name of the experiment.')
+
+    parser.add_argument('-d', '--dir', default='None', type=str,
+                        help='The directory of the PyConform configuration files.')
+
+    return parser.parse_args(argv)
+
+
+def create_jsons(exp, dir):
+
+    global_attributes = dir+'/CESM_CMIP6.ga'
+    if run_type == "CAM":
+        definitions = dir+'/CESM_MastList.def' 
+    elif run_type == 'HIRES':
+        definitions = dir+'CESM_HIRES_MastList.def'
+    else:
+        definitions = dir+'/CESM_WACCM_MastList.def'
+    exp_name = exp
+    output_dir = 'xxxxxxx' 
+    json_dir = 'tmp/'+exp_name+'/'
+
+    try:
+        pipe = subprocess.Popen(['iconform -g {0} -d {1} -tt xml -e {2} -p {3} -o {4}'.format(
+            global_attributes, definitions, exp_name, output_dir, json_dir)], shell=True, stdout=subprocess.PIPE)
+        output = pipe.communicate()[0]
+        #print('iconform:  {0}'.format(output))
+        while pipe.poll() is None:
+            time.sleep(0.5)
+    except OSError as e:
+        print('WARNING',e.errno,e.strerror)
+
+def outwrite(st,sm):
+
+    if 'MX' in st:
+        if ':A' in st:
+            st = st.replace(':A',':X')
+        elif ':I' in st:
+            st = st.replace(':I',':X')
+    elif 'MN' in st:
+        if ':A' in st:
+            st = st.replace(':A',':M')
+        elif ':I' in st:
+            st = st.replace(':I',':M')
+    sm.write(st) 
+
+def find_match(exp,site_string):
+
+    var_defs = {}
+
+    tfound=0
+    tmissing=0
+    tfound_def=0
+    tmissing_def=0
+
+    js = glob.glob('tmp/'+exp+"/*.json")
+    for j in js:
+        if 'MISSING_DEFS.json' in j:
+            js.remove(j)
+    for j in js:
+        jd = json.load(open(j))
+        var_defs[j] = {}
+        found = {}
+        missing = {}
+        dims = []
+        no_def = []
+        rl = None
+        freql = None
+
+        # get the cesm var names from the defs in json file
+        cmd = "vardeps -f -n "+j
+        #print ('---------------------------------------')
+        #print (cmd)
+        p = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        end = False
+        output = p.stdout.read().split('\n')
+        for l in output:
+            if '[' in l and ']' in l and ':' in l:
+                tfound_def = tfound_def + 1
+                split = l.split();
+                var_defs[j][split[0]] = {}
+                var_defs[j][split[0]]["freq"] = split[1].replace("[","").replace("]","").replace(":","").split(",")[0]
+                if 'fx' in var_defs[j][split[0]]["freq"]:
+                    var_defs[j][split[0]]["freq"] = 'mon'
+                var_defs[j][split[0]]["realm"] = split[1].replace("[","").replace("]","").replace(":","").split(",")[1] 
+                var_defs[j][split[0]]["vars"] = l.split(":")[1].split()
+                var_defs[j][split[0]]["var_check"] = {}                
+
+                v = var_defs[j][split[0]]["vars"]
+                r = var_defs[j][split[0]]["realm"]
+                f = var_defs[j][split[0]]["freq"]
+                for v1 in v:
+                    found = False
+                    stream = ["zzzzzzzz","zzzzzzzz"]
+                    for k in jd.keys():
+                      if "definition" in jd[k].keys():
+                        if v1 in jd[k]["definition"] and "input_glob" in jd[k].keys():
+                            stream = jd[k]["input_glob"].split(".")
+                            if stream[1] not in variable_list[cesm_realms[stream[0]]].keys() and v1 not in ignore:
+                                if 'Pt' in f:
+                                    vr=v1+":I"
+                                else:
+                                    vr=v1
+                                variable_list[cesm_realms[stream[0]]][stream[1]] = [vr]
+                                found = True
+                            else:
+                                if v1 not in variable_list[cesm_realms[stream[0]]][stream[1]] and v1 not in ignore:
+                                    if 'Pt' in f:
+                                        vr=v1+":I"
+                                    else:
+                                        vr=v1
+                                    variable_list[cesm_realms[stream[0]]][stream[1]].append(vr)
+                                    found = True
+                            if v1 in variable_list[cesm_realms[stream[0]]][stream[1]]:
+                                found = True
+                        #elif v1 in jd[k]["definition"] and v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
+                        elif v1 in jd[k]["definition"] and v1 not in variable_list[cmip6_realms[r]][f] and v1 not in ignore:
+                            variable_list[cmip6_realms[r]][f].append(v1)
+                            found = True
+                        elif v1 in variable_list[cmip6_realms[r]][f]:
+                            found = True
+                    if not found and v1 not in ignore:
+                        print v1,r,f 
+
+    total = 0
+    out = open("CESM_VARS_NEEDED_"+exp+"_"+datetime.now().strftime('%Y%m%d_%H%M%S')+".out","w")
+    for k1,v1 in  variable_list.iteritems():
+        print "----------------------------------"
+        out.write("----------------------------------"+"\n")
+        print k1
+        out.write(k1+"\n")
+        for k2,v2 in v1.iteritems():
+            print k2,"--->",v2
+            out.write(k2+"--->"+str(v2)+"\n")
+            total += len(v2)
+
+    print 'total variables: ',total
+    out.write('total variables: '+str(total)+"\n")
+    out.close()          
+
+    # Eliminate variables that collide (need both average and instantaneous in one stream, eliminate the instantaneous field)
+    # look through monthlies
+    for v in variable_list["atm"]["mon"]:
+        if v.strip() in variable_list["atm"]["monPt"]:
+             variable_list["atm"]["monPt"].remove(v)
+    for v in variable_list["atm"]["monC"]:
+        if v.strip() in variable_list["atm"]["monPt"]:
+             variable_list["atm"]["monPt"].remove(v) 
+    # there is only one daily type, skip over to hourly 6
+    for v in variable_list["atm"]["6hr"]:
+        if v.strip() in variable_list["atm"]["6hrPt"]:
+             variable_list["atm"]["6hrPt"].remove(v)
+    # look through hourly 3
+    for v in variable_list["atm"]["3hr"]:
+        if v.strip() in variable_list["atm"]["3hrPt"]:
+             variable_list["atm"]["3hrPt"].remove(v)
+    # look through hourlies
+    for v in variable_list["atm"]["1hr"]:
+        if v.strip() in variable_list["atm"]["1hrPt"]:
+             variable_list["atm"]["1hrPt"].remove(v)
+    for v in variable_list["atm"]["1hr"]:
+        if v.strip() in variable_list["atm"]["1hrCM"]:
+             variable_list["atm"]["1hrCM"].remove(v)
+
+
+    # create user_nl_cam
+    #"atm":{"1hr":[],"1hrCM":[],"1hrPt":[],"3hr":[],"3hrPt":[],"6hr":[],"6hrPt":[],"day":[],"dec":[],"fx":[],"mon":[],"monC":[],"monPt":[],"subhrPt":[],"yr":[],"yrPt":[]}
+    out = open("user_nl_cam.fincls", "w")
+    out.write('! Users should add all user specific namelist changes below in the form of \n')
+    out.write('! namelist_var = new_namelist_value \n')
+    out.write('nhtfrq         =           0,  -24,  -6,  -3,  -1,   1\n')
+    out.write('mfilt  = 1, 5, 20, 40, 120, 240 \n')
+    #out.write('ndens  = 2, 2, 2, 2, 2, 2\n')
+
+    # site locations
+    if len(variable_list["atm"]["subhrPt"])>0:
+        out.write("FINCL6LONLAT        = "+site_string)
+        out.write('\n\n')
+
+    #fincl1 -- month
+    out.write('fincl1 = ')
+    for v in sorted(variable_list["atm"]["mon"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["monC"]):
+        outwrite("\'"+v+':A'+"\', ", out) 
+    for v in sorted(variable_list["atm"]["h0"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["monPt"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    out.write('\n\n')
+
+    # fincl2 -- day
+    out.write('fincl2 = ')
+    for v in sorted(variable_list["atm"]["day"]):
+        outwrite("\'"+v+':A'+"\', ", out)   
+    for v in sorted(variable_list["atm"]["h1"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    out.write('\n\n')
+
+    # fincl3 -- hour6
+    out.write('fincl3 = ')
+    for v in sorted(variable_list["atm"]["6hr"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["h2"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["6hrPt"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    out.write('\n\n')
+
+    # fincl4 -- hour3
+    out.write('fincl4 = ')
+    for v in sorted(variable_list["atm"]["3hr"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["h3"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["3hrPt"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    out.write('\n\n')
+
+    # fincl5 -- hour1
+    out.write('fincl5 = ')
+    for v in sorted(variable_list["atm"]["1hr"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["1hrCM"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["h4"]):
+        outwrite("\'"+v+':A'+"\', ", out)
+    for v in sorted(variable_list["atm"]["1hrPt"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    out.write('\n\n')
+
+    # fincl6 -- subhourly
+    out.write('fincl6= ')
+    for v in sorted(variable_list["atm"]["h5"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    for v in sorted(variable_list["atm"]["subhrPt"]):
+        outwrite("\'"+v+':I'+"\', ", out)
+    out.write('\n\n')
+
+    out.close()
+
+    # create user_nl_cice
+    out = open("user_nl_cice.fincls", "w")
+    out.write('!----------------------------------------------------------------------------------\n')
+    out.write('! Users should add all user specific namelist changes below in the form of\n')
+    out.write('!   namelist_var = new_namelist_value\n')
+    out.write('! Note - that it does not matter what namelist group the namelist_var belongs to\n')
+    out.write('!----------------------------------------------------------------------------------\n\n')
+    out.write('histfreq = \'m\',\'d\',\'x\',\'x\',\'x\'\n')
+    out.write('histfreq_n = 1,1,1,1,1\n\n')
+    out.write('f_CMIP = \'mdxxx\'\n')
+    out.close()
+
+    # create cmip6_tavg_contents
+    out = open("cmip6_tavg_contents","w")
+    # monthly
+    for v in sorted(variable_list["ocn"]["mon"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["monC"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["monPt"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["yr"]):
+        if v not in variable_list["ocn"]["mon"] and v not in variable_list["ocn"]["monC"] and v not in variable_list["ocn"]["monPt"]:
+            out.write("1  "+v+"\n")
+    for v in sorted(variable_list["ocn"]["yrPt"]):
+        if v not in variable_list["ocn"]["mon"] and v not in variable_list["ocn"]["monC"] and v not in variable_list["ocn"]["monPt"]:
+            out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["mon"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["monC"]):
+        out.write("1  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["monPt"]):
+        out.write("1  "+v+"\n")
+    # daily
+    for v in sorted(variable_list["ocn"]["day"]):
+        out.write("2  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["day"]):
+        out.write("4  "+v+"\n")
+    # annual
+    for v in sorted(variable_list["bgc"]["yr"]):
+        out.write("5  "+v+"\n")
+    for v in sorted(variable_list["bgc"]["yrPt"]):
+        out.write("5  "+v+"\n")    
+    out.close()
+
+    # create user_nl_clm
+    out = open("user_nl_clm.fincls", "w")
+    out.write('!----------------------------------------------------------------------------------\n')
+    out.write('! Users should add all user specific namelist changes below in the form of\n')
+    out.write('! namelist_var = new_namelist_value\n')
+    out.write('!\n')
+    out.write('! EXCEPTIONS:\n')
+    out.write('! Set use_cndv           by the compset you use and the CLM_BLDNML_OPTS -dynamic_vegetation setting\n')
+    out.write('! Set use_vichydro       by the compset you use and the CLM_BLDNML_OPTS -vichydro           setting\n')
+    out.write('! Set use_cn             by the compset you use and CLM_BLDNML_OPTS -bgc  setting\n')
+    out.write('! Set use_crop           by the compset you use and CLM_BLDNML_OPTS -crop setting\n')
+    out.write('! Set spinup_state       by the CLM_BLDNML_OPTS -bgc_spinup      setting\n')
+    out.write('! Set irrigate           by the CLM_BLDNML_OPTS -irrig           setting\n')
+    out.write('! Set co2_ppmv           with CCSM_CO2_PPMV                      option\n')
+    out.write('! Set dtime              with L_NCPL                             option\n')
+    out.write('! Set fatmlndfrc         with LND_DOMAIN_PATH/LND_DOMAIN_FILE    options\n')
+    out.write('! Set finidat            with RUN_REFCASE/RUN_REFDATE/RUN_REFTOD options for hybrid or branch cases\n')
+    out.write('!                        (includes $inst_string for multi-ensemble cases)\n')
+    out.write('! Set maxpatch_glcmec    with GLC_NEC                            option\n')
+    out.write('! Set glc_do_dynglacier  with GLC_TWO_WAY_COUPLING               env variable\n')
+    out.write('!----------------------------------------------------------------------------------\n')
+
+    # fincl1 -- monthly
+    #fincl1 -- month
+    out.write('hist_fincl1 = ')
+    for v in sorted(variable_list["lnd,rof"]["mon"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["monC"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["h0"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["monPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl2 -- monthly
+    out.write('hist_fincl2 = ')
+    for v in sorted(variable_list["lnd,rof"]["h1"]):
+        out.write("\'"+v+"\', ")
+    out.write('\n\n')
+
+    # fincl3 -- monthly
+    out.write('hist_fincl3 = ')
+    for v in sorted(variable_list["lnd,rof"]["h2"]):
+        out.write("\'"+v+"\', ")
+    out.write('\n\n')
+
+    # fincl4 -- yearly
+    out.write('hist_fincl4 = ')
+    for v in sorted(variable_list["lnd,rof"]["yr"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["yrPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["h3"]):
+        out.write("\'"+v+"\', ")
+    out.write('\n\n')
+
+    # fincl5 -- day
+    out.write('hist_fincl5 = ')
+    for v in sorted(variable_list["lnd,rof"]["day"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["h4"]):
+        out.write("\'"+v+"\', ")
+    out.write('\n\n')
+
+    # fincl6 -- day
+    out.write('hist_fincl6 = ')
+    for v in sorted(variable_list["lnd,rof"]["h5"]):
+        out.write("\'"+v+"\', ")
+    out.write('\n\n')
+
+    # fincl7 -- hourly
+    out.write('hist_fincl7 = ')
+    for v in sorted(variable_list["lnd,rof"]["3hr"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["3hrPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["6hr"]):
+        out.write("\'"+v+"\', ")
+    for v in sorted(variable_list["lnd,rof"]["6hrPt"]):
+        out.write("\'"+v+':I'+"\', ")
+    out.write('\n\n')
+
+    # fincl8 -- day (requested by lmwg)
+    out.write('hist_fincl8 = ')
+    out.write("\'FIRE:X\', ")
+    out.write('\n\n')
+
+    # fincl9 -- day (requested by lmwg)
+    out.write('hist_fincl9 = ')
+    out.write("\'FIRE:M\', ")
+    out.write('\n\n')
+
+    out.write('hist_mfilt = 1,1,1,1,365,365,8760,365,365\n')
+    out.write('hist_dov2xy = .true.,.false.,.false.,.true.,.true.,.false.,.true.,.false.,.false.\n')
+    out.write('hist_nhtfrq = 0,0,0,-8760,-24,-24,-1,-24,-24\n')
+    out.write('hist_type1d_pertape = \' \',\' \',\'LAND\',\' \',\' \',\'LAND\',\' \',\' \',\' \'\n')
+
+    out.close()
+
+
+
+def get_sites(sites_file):
+
+    site_string = ''
+
+    if os.path.isfile(sites_file):
+        with open(sites_file) as sfile:
+            for line in sfile:
+                site = line.split(',')[:3]
+                site_string = site_string + "\'" + site[1].strip() + "_" + site[2].strip()+"\', "
+
+    return site_string
+
+def main(argv=None):
+ 
+    args = parseArgs(argv)
+    e = args.exp 
+    dir = args.dir
+    create_jsons(e, dir) 
+    site_string = get_sites("/glade/p/cesm/conform-input/cmip6_input/cmip6-cfsite-locations.txt")
+    find_match(e,site_string)
+
+
+if __name__ == '__main__':
+    main()
+
+

@@ -1,4 +1,5 @@
 import os, sys, subprocess, glob
+import math
         
 from standard_script_setup          import *
 from CIME.case import Case
@@ -135,58 +136,136 @@ class EnvCylc():
         
         num_nodes = case.num_nodes
         bjobs = batch.get_batch_jobs()
-        for job, _ in bjobs:
-            job_ = str.replace(job,'.','_')
-            directives[job_] = []
+#        for job, jsect in bjobs:
+#            job_ = str.replace(job,'.','_')
+#            directives[job_] = []
 
             #task_count = jsect["task_count"]
-            task_count = env_batch.get_value("task_count", subgroup=job)
-            if task_count == "default":
-                models = case.get_values("COMP_CLASSES")
-                env_mach_pes = case.get_env("mach_pes") 
-                task_count = env_mach_pes.get_total_tasks(models)
-                ptile = case.get_value("PES_PER_NODE")
-                self.num_nodes = case.num_nodes
-                self.thread_count = case.thread_count
-            else:
-                ptile = 4                
-                self.num_nodes = 1
-                self.thread_count = 1
+            #task_count = env_batch.get_value("task_count", subgroup=job)
 
-            self.ptile = ptile
-            self.total_tasks = task_count
-            self.tasks_per_node = ptile
+#            models = case.get_values("COMP_CLASSES")
+#            env_mach_pes = case.get_env("mach_pes")
+#            #task_count = env_mach_pes.get_total_tasks(models)
+#            ptile = case.get_value("PES_PER_NODE")
+#            self.num_nodes = case.num_nodes
+#            self.thread_count = case.thread_count
 
-            queue = env_batch.select_best_queue(int(task_count),job)
-            if queue is None:
-                queue = env_batch.select_best_queue(task_count,job)
-            wall_time=None
+            #task_count = jsect["task_count"] if "task_count" in jsect else env_mach_pes.get_total_tasks(models)     
+#            task_count = case.get_value("TOTALPES")*int(case.thread_count)
+
+#            if task_count == "default":
+#                models = case.get_values("COMP_CLASSES")
+#                env_mach_pes = case.get_env("mach_pes") 
+#                task_count = env_mach_pes.get_total_tasks(models)
+#                ptile = case.get_value("PES_PER_NODE")
+#                self.num_nodes = case.num_nodes
+#                self.thread_count = case.thread_count
+#            else:
+#                ptile = 4                
+#                self.num_nodes = 1
+#                self.thread_count = 1
+
+#            self.ptile = ptile
+#            self.total_tasks = task_count
+#            self.tasks_per_node = ptile
+
+#            queue = env_batch.select_best_queue(int(task_count),job=job)
+#            if queue is None:
+#                queue = env_batch.select_best_queue(task_count,job)
+#            all_queue = []
+#            all_queue.append(env_batch.get_default_queue())
+#            all_queue = all_queue + env_batch.get_all_queues()               
+#            queue = None
+# Add back in when cime is frozen
+#            for q in all_queue:
+#                if q is not None:
+#                    if queue is None:
+#                        queue = q.xml_element.text
+
+#            wall_time=None
             #wall_time = env_batch.get_max_walltime(queue) if wall_time is None else wall_time
-            wall_time = env_batch.get_queue_specs(queue)[3] if wall_time is None else wall_time
-            env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time, subgroup=job)
-            env_batch.set_value("JOB_QUEUE", queue, subgroup=job)
+#            wall_time = env_batch.get_queue_specs(queue)[3] if wall_time is None else wall_time
+#            env_batch.set_value("JOB_WALLCLOCK_TIME", wall_time, subgroup=job)
+#            env_batch.set_value("JOB_QUEUE", queue, subgroup=job)
 
-            direct = ''
-            ds = env_batch.get_batch_directives(case, job, raw=True)
-            dss = ds.split('\n') 
-            for d in dss:
-                #direct = direct + transform_vars(d, case=case, subgroup=job)   
-                direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
+            #direct = ''
+            #ds = env_batch.get_batch_directives(case, job, raw=True)
+#            overrides = {"total_tasks": int(task_count),"num_nodes":int(math.ceil(float(task_count)/float(case.tasks_per_node)))}
+#            overrides["job_id"] = case.get_value("CASE") + os.path.splitext(job)[1]
+#            overrides["batchdirectives"] = env_batch.get_batch_directives(case, job, overrides=overrides)
+                
+#            ds = env_batch.get_batch_directives(case, job, overrides=overrides)
+#            dss = ds.split('\n') 
+#            for d in dss:
+#                direct = direct + transform_vars(d, case=case, subgroup=job)   
+                #direct = direct + transform_vars(d, case=case, subgroup=job, check_members=self)       
 
-            s = env_batch.get_submit_args(case, job)
-            bd = env_batch.get_node("batch_directive").text
-            direct = direct.replace(bd,'')
-            direct = direct + s 
-            direct = direct.replace('-', '\n-')
-            direct = direct.split('\n')
-            for d in direct:
-                d.lstrip()
-                d.strip()
-                d = d.split(' ')
-                d=' '.join(d).split()
-                if len(d) == 2:
-                    if ' ' not in d[0] and ' ' not in d[1] and 'walltime' not in d[1]:
-                        directives[job_].append(d[0]+' = '+d[1])
+#            s = env_batch.get_submit_args(case, job)
+#            bd = env_batch.get_batch_directives(case, job, overrides=overrides) 
+
+# Add this back in when cime is more stable
+#            if "run" not in job_:
+#                direct = direct.replace(bd,'')
+#                direct = direct + s 
+#                direct = direct.replace('-', '\n-')
+#                direct = direct.split('\n')
+#                for d in direct:
+#                    d.lstrip()
+#                    d.strip()
+#                    if '#PBS' in d:
+#                        d=d.replace("#PBS",'')
+#                    d = d.split(' ')
+#                    d=' '.join(d).split()
+#                    if len(d) == 2:
+#                        if ' ' not in d[0] and ' ' not in d[1] and 'walltime' not in d[1]:
+#                            directives[job_].append(d[0]+' = '+d[1])
+
+#### Start temp code to get pbs directives from case.run
+#directives[job_] = []
+#            if 'st_archive' in job_:
+#                directives[job_].append("-A = "+os.getenv('PROJECT'))
+#                directives[job_].append("-q = regular")
+#                with open(my_case+"/case.st_archive") as f:
+#                    for l in f:
+#                        if '#PBS' in l:
+#                            pbs_split = l.split()
+#                            if len(pbs_split) == 3:
+#                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+#            else:
+#                print '***************************'
+#                print 'Opening '+my_case+"/.case.run"
+#                print '***************************'
+#                with open(my_case+"/.case.run") as f:
+#                    directives[job_].append("-A = "+os.getenv('PROJECT'))
+#                    directives[job_].append("-q = regular")
+#                    for l in f:
+#                        if '#PBS' in l:
+#                            pbs_split = l.split()
+#                            if len(pbs_split) == 3:
+#                                directives[job_].append(pbs_split[1]+" = "+pbs_split[2])
+        directives['case_st_archive'] = []
+        directives['case_st_archive'].append("-A = "+os.getenv('PROJECT'))
+        directives['case_st_archive'].append("-q = regular")
+        with open(my_case+"/case.st_archive") as f:
+            for l in f:
+                if '#PBS' in l:
+                    pbs_split = l.split()
+                    if len(pbs_split) == 3:
+                        directives['case_st_archive'].append(pbs_split[1]+" = "+pbs_split[2])
+
+        directives['case_run'] = []
+        with open(my_case+"/.case.run") as f:
+            directives['case_run'].append("-A = "+os.getenv('PROJECT'))
+            directives['case_run'].append("-q = regular")
+            for l in f:
+               if '#PBS' in l:
+                    pbs_split = l.split()
+                    if len(pbs_split) == 3:
+                        directives['case_run'].append(pbs_split[1]+" = "+pbs_split[2])
+
+#### End temp code to get pbs directives from case.run
+
+        self.env['machine_name'] = machine_name
         self.env['batch_type'] = env_batch.get_batch_system_type()
         self.env['directives'] = directives
         self.env['STOP_N'] = case.get_value("STOP_N")
@@ -217,7 +296,8 @@ class EnvCylc():
             elif choice == 'N' or choice == 'n':
                 valid = True
                 user_date = str(raw_input("Enter new date (format yyyy-mm-dd):\n"))
-        case.set_value("RUN_WITH_SUBMIT", True)
+                self.env['RUN_STARTDATE'] = user_date
+        #case.set_value("RUN_WITH_SUBMIT", True)
        
         if os.path.isdir(my_case+'/postprocess/'):
             pp_dir = my_case+'/postprocess/'
@@ -284,6 +364,9 @@ class EnvCylc():
             self.env['ICEDIAG_BEGYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_DIFF', shell=True)
             self.env['ICEDIAG_ENDYR_DIFF'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_DIFF', shell=True)
             self.env['ICEDIAG_DIFF_TIMESERIES'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_DIFF_TIMESERIES', shell=True)
+            self.env['ICEDIAG_BEGYR_CONT'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_BEGYR_CONT', shell=True)
+            self.env['ICEDIAG_ENDYR_CONT'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_ENDYR_CONT', shell=True)
+            self.env['ICEDIAG_YRS_TO_AVG'] = subprocess.check_output('./pp_config -value -caseroot '+pp_dir+' --get ICEDIAG_YRS_TO_AVG', shell=True)
 
         os.chdir(cwd)
 

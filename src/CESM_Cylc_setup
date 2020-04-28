@@ -21,7 +21,8 @@ def parseArgs(argv = None):
                         help='Name of the ioutput Cylc Suite.', required=True)
     parser.add_argument('-d','--casedir',default=None, type=str,
                         help='Path to CESM caseroot.', required=True)
-    
+    parser.add_argument('-u','--svn_username',default='default',type=str,
+                        help='cesm svn user name', required=True)    
     parser.add_argument('-b','--build',default='False', type=str,
                         help='Add CESM build', required=False)
     parser.add_argument('-g','--graph',default=None, type=str,
@@ -32,10 +33,17 @@ def parseArgs(argv = None):
                         help='the start number of the first ensemble member', required=False)
     parser.add_argument('-2','--end',default="999", type=str,
                         help='the end number of the last ensemble member', required=False)
+    parser.add_argument('-m','--ppmach',default='default',type=str,
+                        help='machine to run postprocessing on', required=False)
+    parser.add_argument('-q','--queue',default='default',type=str,
+                        help='user specified queue, non default', required=False)
+    parser.add_argument('-x','--exp_name',default='default',type=str,
+                        help='name of the cmip6 exp name', required=False)
+
     return parser.parse_args(argv)
 
 
-def create_new_run_script(ensemble_basename, start, end):
+def create_new_run_script(ensemble_basename, start, end, svn_username):
 
     cdir = os.getcwd()
     
@@ -50,18 +58,53 @@ def create_new_run_script(ensemble_basename, start, end):
 
         os.system('./xmlchange RESUBMIT=0')
 
+        # Write a new case.run
         f_new = open(casedir+'/case.run.cylc','w')
-        f_old = open(casedir+'/case.run','r')
+        f_old = open(casedir+'/.case.run','r')
         for line in f_old:
-            if 'parse_command_line' in line and 'caseroot' in line:
-                f_new.write('    os.system("./xmlchange RUN_WITH_SUBMIT=TRUE")\n')
+            if 'case_run' in line and 'success' in line:
+                f_new.write('        env_batch = case.get_env("batch")\n')
+                f_new.write('        batch_system = env_batch.get_batch_system_type()\n')
+                f_new.write('        env_batch_has_changed = False\n')
+                f_new.write('        try:\n')
+                f_new.write('            case.check_lockedfile(os.path.basename(env_batch.filename))\n')
+                f_new.write('        except SystemExit:\n')
+                f_new.write('            env_batch_has_changed = True\n\n')
+                f_new.write('        if env_batch_has_changed:\n')
+                f_new.write('            # May need to regen batch files if user made batch setting changes (e.g. walltime, queue, etc)\n')
+                f_new.write('            logger.warning(\\\n')
+                f_new.write('"""\n')
+                f_new.write('env_batch.xml appears to have changed, regenerating batch scripts\n')
+                f_new.write('manual edits to these file will be lost!\n')
+                f_new.write('""")\n')
+                f_new.write('            env_batch.make_all_batch_files(case)\n\n')
+                f_new.write('        unlock_file(os.path.basename(env_batch.filename))\n')
+                f_new.write('        lock_file(os.path.basename(env_batch.filename))\n\n')
+
             f_new.write(line)
             if 'case_run' in line and 'success' in line:
                 f_new.write('    os.system("./xmlchange CONTINUE_RUN=TRUE")\n')
+            elif 'from CIME.case import Case' in line:
+                f_new.write('from CIME.locked_files              import unlock_file, lock_file\n')
         f_new.close()
         f_old.close()
         st = os.stat(casedir+'/case.run.cylc')
         os.chmod(casedir+'/case.run.cylc', st.st_mode | stat.S_IEXEC)
+
+        #Write a new case.st_archive
+        f_new = open(casedir+'/case.st_archive.cylc','w')
+        f_old = open(casedir+'/case.st_archive','r')
+        for line in f_old:
+            if 'sys.exit' in line:
+                arch_meta = "os.system(\"./archive_metadata --user "+svn_username+" --password --expType CMIP6\")"
+                f_new.write('    '+arch_meta+'\n')
+            f_new.write(line)
+        f_new.close()
+        f_old.close()
+        st = os.stat(casedir+'/case.st_archive.cylc')
+        os.chmod(casedir+'/case.st_archive.cylc', st.st_mode | stat.S_IEXEC)
+
+
     os.chdir(cdir)
 
 
@@ -109,12 +152,16 @@ def main(argv=None):
     env['end'] = args.end
     env['ensemble_root'] = args.casedir
     env['build'] = args.build
+    env['pp_machine_name'] = args.ppmach
 
     if args.email != None:
         env['email'] = args.email
     else:
         env['email'] = getpass.getuser()+'@ucar.edu' 
 
+    env['PROJECT'] = os.getenv('PROJECT')
+
+    print 'PROJECT: ',env['PROJECT']
     print 'RESUBMIT: ', env['RESUBMIT']
     print 'RUNDIR: ', env['RUNDIR']
     print 'RUN_STARTDATE: ', env['RUN_STARTDATE']
@@ -166,11 +213,11 @@ def main(argv=None):
 
     g = graph.create_graph(keys,template)
 
-    cylc_template.create_cylc_input(g, env, args.path)
+    cylc_template.create_cylc_input(g, env, args.path, args.queue, args.exp_name)
 
     cylc_template.setup_suite(args.path, args.suite, args.graph)
 
-    create_new_run_script(args.casedir, args.start, args.end)
+    create_new_run_script(args.casedir, args.start, args.end, args.svn_username)
 
     create_last_tseries_script(args.casedir, args.start, args.end)
 

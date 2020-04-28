@@ -47,6 +47,9 @@ FV2_RUN = False
 # Add a specific queue to use.  Set to 'None' if you want the default.  Set to 'queue name' if you want a specific queue.
 queue = 'None'
 
+# Defaults to a historical experiment in order to give you the most CMIP6 variable transformations (if this option is selected to run)
+exp_name = 'historical'
+
 
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
 cesm_xml={
@@ -60,7 +63,7 @@ cesm_xml={
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
-       'TIMESERIES_OUTPUT_ROOTDIR': '/gpfs/fs1/collections/cdg/timeseries-cmip6/'+case_root.split('/')[-1],
+       'TIMESERIES_OUTPUT_ROOTDIR': '/glade/scratch/'+os.environ['USER']+'/archive/timeseries/'+case_root.split('/')[-1],
        'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
@@ -157,36 +160,37 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 	    sys.exit()
 
-        print '############################################'
-        print ''
-        print '   Getting experiment details from the db   '
-        print ''
-        print '############################################'
-        print ''
-        case_name = os.path.basename(os.path.normpath(case_root))
-        err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user "+svn_username+" --password --expType CMIP6")
-        if err!=0:
-            print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
-            sys.exit()
-        #db_file = '/gpfs/fs1/work/mickelso/testing/CESM-WF/db.json' 
-        db_file = case_root+"/archive_files/db.json"
 
-        print '############################################'
-        print ''
-        print '   Figuring out which variables need to be '
-        print '   outputted by CESM'
-        print ''
-        print '############################################'
-        print ''
-        # while virtual env is activated, get the cesm variable lists for the output we need the model to write
-        with open(db_file) as db:
-            db_info = json.load(db)
-        exp_name = db_info["experiment_id"]
-        err=os.system(cdir+'/src/get_model_vars -e '+ exp_name+' -d /glade/p/cesm/conform-input/cmip6_input/')
-        if err!=0:
-            print '\033[91m','Error: Failed to create variable lists','\033[0m'
-            print '\033[91m','Tried running: ','./get_model_vars -h '+ exp_name,'\033[0m'
-            sys.exit()
+        if 'STANDARDIZE_TIMESERIES' in pp_xml:
+            if 'TRUE' in pp_xml['STANDARDIZE_TIMESERIES']:
+
+                print '############################################'
+                print ''
+                print '   Getting experiment details from the db   '
+                print ''
+                print '############################################'
+                print ''
+                orig_db_file = cdir+'/src/db.json'
+                db_file = case_root+"/archive_files/db.json"
+                os.system('mkdir '+case_root+"/archive_files/")
+                shutil.copy2(orig_db_file,db_file)
+
+                print '############################################'
+                print ''
+                print '   Figuring out which variables need to be '
+                print '   outputted by CESM'
+                print ''
+                print '############################################'
+                print ''
+                # while virtual env is activated, get the cesm variable lists for the output we need the model to write
+                with open(db_file) as db:
+                    db_info = json.load(db)
+                exp_name = db_info["experiment_id"]
+                err=os.system(cdir+'/src/get_model_vars -e '+ exp_name+' -d /glade/p/cesm/conform-input/cmip6_input/')
+                if err!=0:
+                    print '\033[91m','Error: Failed to create variable lists','\033[0m'
+                    print '\033[91m','Tried running: ','./get_model_vars -h '+ exp_name,'\033[0m'
+                    sys.exit()
 	# Get old values back
 	os.environ['PATH'] = old_os_path
 	sys.prefix = old_sys_prefix
@@ -211,8 +215,6 @@ def create(cesm_code_base, testing=True, command=None):
 	    sys.exit()
     if os.path.isdir(case_root+'/postprocess/'):
 	os.chdir(case_root+'/postprocess/')
-        pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/collections/cdg/cmip6/'+str(db_info["case_id"])+"/"
-        #pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/scratch/cmip6/archive/CMIP6_DATA/'+case_root.split('/')[-1]
 	for k,v in pp_xml.iteritems():
 	    print 'Setting ',k,' to ',v
 	    err=os.system('./pp_config --set '+k+'='+v)
@@ -306,10 +308,6 @@ def create(cesm_code_base, testing=True, command=None):
                     print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
                     sys.exit()
  
-        with open(db_file) as db:
-            db_info = json.load(db)
-        exp_name = db_info["experiment_id"]
-
         conform_vars = {
             'CONFORM_JSON_DIRECTORY': case_root+'/postprocess/',
             'CONFORM_EXP_NAME': exp_name
@@ -326,34 +324,9 @@ def create(cesm_code_base, testing=True, command=None):
         if err!=0:
             print '\033[91m','Error: Failed in call to iconform','\033[0m'
             sys.exit()
-    
-
-#    if build == True or build == 'TRUE' or build == 'true':
-#	print '############################################'
-#	print ''
-#	print '   Run case.build'
-#	print ''
-#	print '############################################'
-#	print ''
-#	os.chdir(case_root)
-#	err=os.system('execca ./case.build')
-#	if err!=0:
-#	    print '\033[91m','Error: Failed in call to case.build','\033[0m'
-#	    sys.exit()
-
-    if not testing:
-        print '############################################'
-        print ''
-        print '   Archive the case in the db   '
-        print ''
-        print '############################################'
-        print ''
-        os.chdir(case_root)
-        err=os.system("./archive_metadata --user "+svn_username+" --password --expType CMIP6")
-        if err!=0:
-            print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
-            sys.exit()
-
+   
+    else: 
+        exp_name = casename
     # Toggle to build the case
     build = 'False' #True or False 
     print '############################################'

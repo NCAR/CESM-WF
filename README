@@ -1,3 +1,7 @@
+The documentation for this project can be found at
+https://cesm-wf-documentation.readthedocs.io
+
+
 Creates a Cylc suite from the CESM XML environment.  Used to automate a CESM run.
 
 These scripts are still in development - please contact Sheri Mickelson (mickelso@ucar.edu)

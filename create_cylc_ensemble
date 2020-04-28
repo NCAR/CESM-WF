@@ -3,6 +3,14 @@ import os, sys, glob, shutil, subprocess
 import distutils.dir_util
 import json
 
+# Get the casename 
+for i in range(0, len(sys.argv)):
+    if '-case' in sys.argv[i]:
+        case_root = sys.argv[i+1]
+        casename = os.path.basename(sys.argv[i+1])
+    elif '-compset' in sys.argv[i]:
+        compset = sys.argv[i+1]
+
 #############################################################################
 #
 # User Modify Section
@@ -17,21 +25,32 @@ namelist_root = ''
 cp_sourceMods = False
 sourceMods_dir = ''
 
-# Toggle to build the case
-build = 'False' #True or False 
-
 # Central location for all of your cylc suites (it is recomended to keep this the same for all cylc suites)
 suite_location = '/glade/u/home/'+os.environ['USER']+'/cylc_suites/'
 
 # Email address to have cylc send wf status updates as it runs
-email = os.environ['USER']+'@ucar.edu'
+email = os.environ['USER']+'@ucar.edu,mickelso@ucar.edu,expdb@cgd.ucar.edu'
 
-# TEMP UNTIL DB COMPLETE
-db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json'
+# svn username
+svn_username = "cmip6"
+
+# Machine to run pp on (geyser, caldera, cheyenne, default)
+ppmach = 'cheyenne'
+
+# Set to 'True' or 'False' if this is a WACCM run
+# If set to true, this will modify some of the CESM-CMIP6 requested variable definitions (no other effect)
+WACCM_RUN = False
+HIRES_RUN = False
+CLM_RUN = False
+FV2_RUN = False
 
 # Set ensemble start and finish
 ensemble_start = 1
 ensemble_end = 3
+
+# Add a specific queue to use.  Set to None if you want the default.  Set to 'queue name' if you want a specific queue.
+queue = 'None'
+
 
 # Add/Revove/Modify any of the CESM xml variables you would like to set or change
 cesm_xml={
@@ -45,8 +64,8 @@ cesm_xml={
 pp_xml={
        'GENERATE_TIMESERIES': 'TRUE',
        'STANDARDIZE_TIMESERIES': 'TRUE',
-       'STANDARDIZE_TIMESERIES': 'TRUE',
-       'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/',
+       'TIMESERIES_OUTPUT_ROOTDIR': '/gpfs/fs1/collections/cdg/timeseries-cmip6/'+case_root.split('/')[-1],
+       'CONFORM_OUTPUT_DIR': '/glade/scratch/'+os.environ['USER']+'/archive/CMIP6_DATA/'+case_root.split('/')[-1],
        'GENERATE_AVGS_ATM': 'TRUE',
        'GENERATE_DIAGS_ATM': 'TRUE',
        'ATMDIAG_test_first_yr': '2',
@@ -73,13 +92,17 @@ pp_xml={
        'ICEDIAG_BEGYR_CONT': '2',
        'ICEDIAG_ENDYR_CONT': '4',
        'ICEDIAG_DIFF_TIMESERIES': 'FALSE',
-       'ICEDIAG_YRS_TO_AVG': '2'
+       'ICEDIAG_YRS_TO_AVG': '2',
+       'USER_NAME': 'cmip6',
+       'GLOBAL_WEBHOST': 'burnt.cgd.ucar.edu',
+       'GLOBAL_WEBLOGIN': 'cmip6',
+       'GLOBAL_REMOTE_WEBDIR': '/project/diagnostics/external/'+compset+'/'+casename
        }
 
 
 def main(argv=None):
     # Location of cesm code base
-    cesm_code_base = '/glade/p/work/'+os.environ['USER']+'/cesm_sandbox/cesm2_0_alpha07c/'
+    cesm_code_base = '/glade/work/'+os.environ['USER']+'/cesm_sandbox/cesm2.0'
 
     create(cesm_code_base, testing=False)
 
@@ -149,6 +172,40 @@ def create(cesm_code_base, testing=True, command=None):
 		print '\033[91m','Error: Failed to create post processing','\033[0m'                            
 		print '\033[91m','Tried running: ','create_postprocess -caseroot '+case_root,'\033[0m'
 		sys.exit()
+
+            print '############################################'
+            print ''
+            print '   Getting experiment details from the db   '
+            print ''
+            print '############################################'
+            print ''
+            case_name = os.path.basename(os.path.normpath(case_root))
+
+            err=os.system("./archive_metadata --query_cmip6 "+case_name+"  db.json --user "+svn_username+" --password --expType CMIP6")
+            if err!=0:
+                print '\033[91m','Error: Failed in call to the db to get exp information','\033[0m'
+                sys.exit()
+            #db_file = '/glade/p/cesm/conform-input/cmip6_input/db.json' 
+            db_file = case_root+"/archive_files/db.json"
+
+
+            print '############################################'
+            print ''
+            print '   Figuring out which variables need to be '
+            print '   outputted by CESM'
+            print ''
+            print '############################################'
+            print ''
+            # while virtual env is activated, get the cesm variable lists for the output we need the model to write
+            with open(db_file) as db:
+                db_info = json.load(db)
+            exp_name = db_info["experiment_id"]
+            err=os.system(cdir+'/src/get_model_vars -e '+ exp_name+' -d /glade/p/cesm/conform-input/cmip6_input/')
+            if err!=0:
+                print '\033[91m','Error: Failed to create variable lists','\033[0m'
+                print '\033[91m','Tried running: ','./get_model_vars -h '+ exp_name,'\033[0m'
+                sys.exit()
+
 	    # Get old values back
 	    os.environ['PATH'] = old_os_path
 	    sys.prefix = old_sys_prefix
@@ -173,7 +230,13 @@ def create(cesm_code_base, testing=True, command=None):
 		sys.exit()
 	if os.path.isdir(case_root+'/postprocess/'):
 	    os.chdir(case_root+'/postprocess/')
+            pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/collections/cdg/cmip6/'+str(db_info["case_id"])+"/"
+            #pp_xml['CONFORM_OUTPUT_DIR'] = '/glade/scratch/cmip6/archive/CMIP6_DATA/'+case_root.split('/')[-1]
 	    for k,v in pp_xml.iteritems():
+                if 'TIMESERIES_OUTPUT_ROOTDIR' in k:
+                    v = v+'.'+n
+                elif 'GLOBAL_REMOTE_WEBDIR' in k:
+                    v = v+'.'+n+'/'
 		print 'Setting ',k,' to ',v
 		err=os.system('./pp_config --set '+k+'='+v)
 		if err!=0:
@@ -231,7 +294,41 @@ def create(cesm_code_base, testing=True, command=None):
             print ''
             print '############################################'
             print ''
-         
+        
+            if WACCM_RUN:
+                err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def')
+                err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_WACCM.ga')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def','\033[0m'
+                    sys.exit()
+            if HIRES_RUN:
+                err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_HIRES_MastList.def')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_HIRES_MastList.def','\033[0m'
+                    sys.exit()
+            if CLM_RUN:
+                err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def')
+                if err!=0:
+                    print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                    print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
+                    sys.exit()
+            if FV2_RUN:
+                if WACCM_RUN:
+                    err=os.system('./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_WACCM_MastList.def')
+                    err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_WACCM_FV2.ga')
+                    if err!=0:
+                        print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                        print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
+                        sys.exit()
+                else:
+                    err=os.system('./pp_config --set CONFORM_GLOBAL_ATTRIBUTES=/glade/p/cesm/conform-input/cmip6_input/CESM_CMIP6_FV2.ga')
+                    if err!=0:
+                        print '\033[91m','Error: Failed to change a post processing xml variable','\033[0m'
+                        print '\033[91m','Tried running: ','./pp_config --set CONFORM_CESM_DEFINITIONS=/glade/p/cesm/conform-input/cmip6_input/CESM_CLM_MastList.def','\033[0m'
+                        sys.exit()
+ 
             with open(db_file) as db:
                 db_info = json.load(db)
             exp_name = db_info["experiment_id"]
@@ -267,6 +364,20 @@ def create(cesm_code_base, testing=True, command=None):
 #		print '\033[91m','Error: Failed in call to case.build','\033[0m'
 #		sys.exit()
 
+        print '############################################'
+        print ''
+        print '   Archive the case in the db   '
+        print ''
+        print '############################################'
+        print ''
+        os.chdir(case_root)
+        err=os.system("./archive_metadata --user "+svn_username+" --password --expType CMIP6")
+        if err!=0:
+            print '\033[91m','Error: Failed in call to archive the case to the db','\033[0m'
+            sys.exit()
+
+    # Toggle to build the case
+    build = 'False' #True or False
     print '############################################'
     print ''
     print '   Setup Cylc Automation'
@@ -277,12 +388,32 @@ def create(cesm_code_base, testing=True, command=None):
     case_name = os.path.basename(os.path.normpath(first_case_root))
     case_name_base = case_name[:-4]
     uid = str(ensemble_start)+'-'+str(ensemble_end)
-    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email)
+    err=os.system('./CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -b '+build+' -s '+case_name_base+'.'+uid+'.suite.cmip6'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+' -x '+exp_name)
 
     os.chdir(cdir)
 
+    if not testing:
 
-    if not testing:    
+        outf = open(first_case_root+"/Cylc.Instructions.txt","w")
+        outf.write( '##########################################################################\n')
+        outf.write( '\n')
+        outf.write( '   New CESM case created with Post Processing and Cylc Suite Enabled in\n')
+        outf.write( '     '+first_case_root+'-'+case_root+'\n')
+        outf.write( '  \n')
+        outf.write( '   Next steps: \n')
+        if build == False or build == 'FALSE' or build == 'false':
+            outf.write( '               - build the cases\n')
+        outf.write( '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png\n')
+        outf.write( '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: \n')
+        outf.write( '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue+"\n")
+        outf.write( '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6\n')
+        outf.write( '\n')
+        outf.write( '#########################################################################\n')
+        outf.write( '\n')
+        outf.close()
+
+
+    
 	print '##########################################################################'
 	print ''
 	print '   New CESM case created with Post Processing and Cylc Suite Enabled in'
@@ -293,9 +424,10 @@ def create(cesm_code_base, testing=True, command=None):
 	    print '               - build the cases'
 	print '               - open this file to make sure the workflow looks as expected: '+suite_location+'/'+case_name_base+'.'+uid+'/workflow.png'
 	print '                  - if the workflow is not what you expect, cd into your new case directory, modify cesm xml env, and run: '
-	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email
-	print '               - execute: gcylc '+case_name_base+'.'+uid+'.suite'
+	print '                    '+cdir+'/src/CESM_Cylc_setup -c '+ cesm_code_base+'/cime/'+' -p '+suite_location+'/'+case_name_base+'.'+uid+' -s '+case_name_base+'.'+uid+'.suite'+' -d '+ensemble_path+' -u '+svn_username+' -1 '+str(ensemble_start)+' -2 '+str(ensemble_end)+' -g workflow.png'+' -e '+email+' -m '+ppmach+' -q '+queue
+	print '               - execute: gcylc '+case_name_base+'.'+uid+'.suite.cmip6'
 	print ''
+        print '   These instructions have also been written to '+first_case_root+"/Cylc.Instructions.txt"
 	print '#########################################################################'
 	print ''
 
