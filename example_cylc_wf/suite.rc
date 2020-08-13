@@ -1,0 +1,373 @@
+#!Jinja2 
+{% set dates_atm_averages = ['1876-01-01', '1926-01-01', '1936-01-01', '1946-01-01', '1956-01-01', '1966-01-01', '1976-01-01', '1986-01-01', '1996-01-01', '2006-01-01'] %}
+{% set dates_atm_diagnostics = ['1876-01-01', '1926-01-01', '1936-01-01', '1946-01-01', '1956-01-01', '1966-01-01', '1976-01-01', '1986-01-01', '1996-01-01', '2006-01-01'] %}
+{% set dates_case_run = ['1860-01-01', '1870-01-01', '1880-01-01', '1890-01-01', '1900-01-01', '1910-01-01', '1920-01-01', '1930-01-01', '1940-01-01', '1950-01-01', '1960-01-01', '1970-01-01', '1980-01-01', '1990-01-01', '2000-01-01', '2010-01-01'] %}
+{% set dates_case_st_archive = ['1860-01-01', '1870-01-01', '1880-01-01', '1890-01-01', '1900-01-01', '1910-01-01', '1920-01-01', '1930-01-01', '1940-01-01', '1950-01-01', '1960-01-01', '1970-01-01', '1980-01-01', '1990-01-01', '2000-01-01', '2010-01-01'] %}
+{% set dates_ice_averages = ['1881-01-01', '1911-01-01', '1941-01-01', '1971-01-01', '2001-01-01'] %}
+{% set dates_ice_diagnostics = ['1881-01-01', '1911-01-01', '1941-01-01', '1971-01-01', '2001-01-01'] %}
+{% set dates_lnd_averages = ['1876-01-01', '1926-01-01', '1936-01-01', '1946-01-01', '1956-01-01', '1966-01-01', '1976-01-01', '1986-01-01', '1996-01-01', '2006-01-01'] %}
+{% set dates_lnd_diagnostics = ['1876-01-01', '1926-01-01', '1936-01-01', '1946-01-01', '1956-01-01', '1966-01-01', '1976-01-01', '1986-01-01', '1996-01-01', '2006-01-01'] %}
+{% set dates_ocn_averages = ['1881-01-01', '1911-01-01', '1941-01-01', '1971-01-01', '2001-01-01'] %}
+{% set dates_ocn_diagnostics = ['1881-01-01', '1911-01-01', '1941-01-01', '1971-01-01', '2001-01-01'] %}
+{% set dates_timeseriesL = ['2010-01-01'] %}
+{% set dates_xconform = ['2010-01-01'] %}
+{% set ATMDIAG_test_first_yr = [1850,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990] %}
+{% set ATMDIAG_test_nyrs = [25,25,25,25,25,25,25,25,25,25,25] %}
+{% set OCNDIAG_YEAR0 = [1850,1881,1911,1941,1971,1985] %}
+{% set OCNDIAG_YEAR1 = [1880,1910,1940,1970,2000,2014] %}
+{% set OCNDIAG_TSERIES_YEAR0 = [1850,1850,1850,1850,1850,1850] %}
+{% set OCNDIAG_TSERIES_YEAR1 = [1880,1910,1940,1970,2000,2014] %}
+{% set LNDDIAG_clim_first_yr_1 = [1850,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990] %}
+{% set LNDDIAG_trends_first_yr_1 = [1850,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990] %}
+{% set LNDDIAG_clim_num_yrs_1 = [25,25,25,25,25,25,25,25,25,25,25] %}
+{% set LNDDIAG_trends_num_yrs_1 = [25,25,25,25,25,25,25,25,25,25,25] %}
+{% set ICEDIAG_BEGYR_DIFF = [1850,1881,1911,1941,1971,1985] %}
+{% set ICEDIAG_ENDYR_DIFF = [1880,1910,1940,1970,2000,2014] %}
+{% set ICEDIAG_BEGYR_CONT = [1850,1881,1911,1941,1971,1985] %}
+{% set ICEDIAG_ENDYR_CONT = [1880,1910,1940,1970,2000,2014] %}
+{% set ICEDIAG_YRS_TO_AVG = [30,30,30,30,30,30] %}
+title = b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003 workflow 
+[cylc]
+    [[environment]]
+        MAIL_ADDRESS=myEmail@ucar.edu
+    [[event hooks]]
+        shutdown handler = cylc email-suite
+[scheduling]
+    [[dependencies]]
+        graph = """
+                    case_run_1860-01-01 => case_st_archive_1860-01-01
+                    case_st_archive_1860-01-01 => case_run_1870-01-01
+                    case_run_1870-01-01 => case_st_archive_1870-01-01
+                    case_st_archive_1870-01-01 => case_run_1880-01-01
+                    case_run_1880-01-01 => case_st_archive_1880-01-01
+                    case_st_archive_1880-01-01 => atm_averages_1876-01-01 & lnd_averages_1876-01-01 & case_run_1890-01-01
+                    atm_averages_1876-01-01 => atm_diagnostics_1876-01-01 => atm_diagnostics_1876-01-01_post
+                    lnd_averages_1876-01-01 => lnd_diagnostics_1876-01-01 => lnd_diagnostics_1876-01-01_post
+                    case_run_1890-01-01 => case_st_archive_1890-01-01
+                    case_st_archive_1890-01-01 => ocn_averages_1881-01-01 & ice_averages_1881-01-01 & case_run_1900-01-01
+                    ocn_averages_1881-01-01 => ocn_diagnostics_1881-01-01 => ocn_diagnostics_1881-01-01_post
+                    ice_averages_1881-01-01 => ice_diagnostics_1881-01-01 => ice_diagnostics_1881-01-01_post
+                    case_run_1900-01-01 => case_st_archive_1900-01-01
+                    case_st_archive_1900-01-01 => case_run_1910-01-01
+                    case_run_1910-01-01 => case_st_archive_1910-01-01
+                    case_st_archive_1910-01-01 => case_run_1920-01-01
+                    case_run_1920-01-01 => case_st_archive_1920-01-01
+                    case_st_archive_1920-01-01 => ocn_averages_1911-01-01 & ice_averages_1911-01-01 & case_run_1930-01-01
+                    ocn_averages_1911-01-01 => ocn_diagnostics_1911-01-01 => ocn_diagnostics_1911-01-01_post
+                    ice_averages_1911-01-01 => ice_diagnostics_1911-01-01 => ice_diagnostics_1911-01-01_post
+                    case_run_1930-01-01 => case_st_archive_1930-01-01
+                    case_st_archive_1930-01-01 => atm_averages_1926-01-01 & lnd_averages_1926-01-01 & case_run_1940-01-01
+                    atm_averages_1926-01-01 => atm_diagnostics_1926-01-01 => atm_diagnostics_1926-01-01_post
+                    lnd_averages_1926-01-01 => lnd_diagnostics_1926-01-01 => lnd_diagnostics_1926-01-01_post
+                    case_run_1940-01-01 => case_st_archive_1940-01-01
+                    case_st_archive_1940-01-01 => atm_averages_1936-01-01 & lnd_averages_1936-01-01 & case_run_1950-01-01
+                    atm_averages_1936-01-01 => atm_diagnostics_1936-01-01 => atm_diagnostics_1936-01-01_post
+                    lnd_averages_1936-01-01 => lnd_diagnostics_1936-01-01 => lnd_diagnostics_1936-01-01_post
+                    case_run_1950-01-01 => case_st_archive_1950-01-01
+                    case_st_archive_1950-01-01 => atm_averages_1946-01-01 & ocn_averages_1941-01-01 & lnd_averages_1946-01-01 & ice_averages_1941-01-01 & case_run_1960-01-01
+                    atm_averages_1946-01-01 => atm_diagnostics_1946-01-01 => atm_diagnostics_1946-01-01_post
+                    ocn_averages_1941-01-01 => ocn_diagnostics_1941-01-01 => ocn_diagnostics_1941-01-01_post
+                    lnd_averages_1946-01-01 => lnd_diagnostics_1946-01-01 => lnd_diagnostics_1946-01-01_post
+                    ice_averages_1941-01-01 => ice_diagnostics_1941-01-01 => ice_diagnostics_1941-01-01_post
+                    case_run_1960-01-01 => case_st_archive_1960-01-01
+                    case_st_archive_1960-01-01 => atm_averages_1956-01-01 & lnd_averages_1956-01-01 & case_run_1970-01-01
+                    atm_averages_1956-01-01 => atm_diagnostics_1956-01-01 => atm_diagnostics_1956-01-01_post
+                    lnd_averages_1956-01-01 => lnd_diagnostics_1956-01-01 => lnd_diagnostics_1956-01-01_post
+                    case_run_1970-01-01 => case_st_archive_1970-01-01
+                    case_st_archive_1970-01-01 => atm_averages_1966-01-01 & lnd_averages_1966-01-01 & case_run_1980-01-01
+                    atm_averages_1966-01-01 => atm_diagnostics_1966-01-01 => atm_diagnostics_1966-01-01_post
+                    lnd_averages_1966-01-01 => lnd_diagnostics_1966-01-01 => lnd_diagnostics_1966-01-01_post
+                    case_run_1980-01-01 => case_st_archive_1980-01-01
+                    case_st_archive_1980-01-01 => atm_averages_1976-01-01 & ocn_averages_1971-01-01 & lnd_averages_1976-01-01 & ice_averages_1971-01-01 & case_run_1990-01-01
+                    atm_averages_1976-01-01 => atm_diagnostics_1976-01-01 => atm_diagnostics_1976-01-01_post
+                    ocn_averages_1971-01-01 => ocn_diagnostics_1971-01-01 => ocn_diagnostics_1971-01-01_post
+                    lnd_averages_1976-01-01 => lnd_diagnostics_1976-01-01 => lnd_diagnostics_1976-01-01_post
+                    ice_averages_1971-01-01 => ice_diagnostics_1971-01-01 => ice_diagnostics_1971-01-01_post
+                    case_run_1990-01-01 => case_st_archive_1990-01-01
+                    case_st_archive_1990-01-01 => atm_averages_1986-01-01 & lnd_averages_1986-01-01 & case_run_2000-01-01
+                    atm_averages_1986-01-01 => atm_diagnostics_1986-01-01 => atm_diagnostics_1986-01-01_post
+                    lnd_averages_1986-01-01 => lnd_diagnostics_1986-01-01 => lnd_diagnostics_1986-01-01_post
+                    case_run_2000-01-01 => case_st_archive_2000-01-01
+                    case_st_archive_2000-01-01 => case_run_2010-01-01
+                    case_run_2010-01-01 => case_st_archive_2010-01-01
+                    case_st_archive_2010-01-01 => atm_averages_1996-01-01 & lnd_averages_1996-01-01 & case_run_2015-01-01
+                    case_run_2015-01-01 => case_st_archive_2015-01-01
+                    case_st_archive_2015-01-01 => atm_averages_1996-01-01 & lnd_averages_1996-01-01 
+                    atm_averages_1996-01-01 => atm_diagnostics_1996-01-01 => atm_diagnostics_1996-01-01_post
+                    lnd_averages_1996-01-01 => lnd_diagnostics_1996-01-01 => lnd_diagnostics_1996-01-01_post
+                    case_st_archive_2015-01-01 => timeseriesL_2010-01-01 & atm_averages_2006-01-01 & ocn_averages_2001-01-01 & lnd_averages_2006-01-01 & ice_averages_2001-01-01
+                    timeseriesL_2010-01-01 => xconform_2010-01-01
+                    atm_averages_2006-01-01 => atm_diagnostics_2006-01-01 => atm_diagnostics_2006-01-01_post
+                    ocn_averages_2001-01-01 => ocn_diagnostics_2001-01-01 => ocn_diagnostics_2001-01-01_post
+                    lnd_averages_2006-01-01 => lnd_diagnostics_2006-01-01 => lnd_diagnostics_2006-01-01_post
+                    ice_averages_2001-01-01 => ice_diagnostics_2001-01-01 => ice_diagnostics_2001-01-01_post
+               """
+[runtime]
+    [[root]]
+        [[[environment]]]
+        {% for i in range(0,dates_atm_averages|length) %}
+        [[atm_averages_{{dates_atm_averages[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; ./pp_config --set ATMDIAG_test_first_yr={{ATMDIAG_test_first_yr[i]}}; ./pp_config --set ATMDIAG_test_nyrs={{ATMDIAG_test_nyrs[i]}};  b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/atm_averages
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = averages
+                -q = regular
+                -l = select=4:ncpus=18:mpiprocs=18
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_atm_diagnostics|length) %}
+        [[atm_diagnostics_{{dates_atm_diagnostics[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/atm_diagnostics
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = diagnostics
+                -q = regular
+                -l = select=1:ncpus=18:mpiprocs=18
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_atm_diagnostics|length) %}
+        [[atm_diagnostics_{{dates_atm_diagnostics[i]}}_post ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/copy_html
+        {% endfor %}
+
+
+        {% for i in range(0,dates_case_run|length) %}
+        [[case_run_{{dates_case_run[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/case.run.cylc
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+                execution retry delays = PT30S, PT120S, PT600S
+        [[[directives]]]
+                -A = myaccount
+                -q = economy
+                -N = histaer3
+                -r = n
+                -j = oe
+                -S = /bin/bash
+	        -l = select=141:ncpus=36:mpiprocs=12:ompthreads=3
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+        [[case_run_2015-01-01 ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; ./xmlchange STOP_N=5; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/case.run.cylc
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+                execution retry delays = PT30S, PT120S, PT600S
+        [[[directives]]]
+                -A = myaccount
+                -q = economy
+                -N = histaer3
+                -r = n
+                -j = oe
+                -S = /bin/bash
+	        -l = select=141:ncpus=36:mpiprocs=12:ompthreads=3
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+
+
+        {% for i in range(0,dates_case_st_archive|length) %}
+        [[case_st_archive_{{dates_case_st_archive[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/case.st_archive.cylc
+        [[[job]]]
+                method = pbs
+                execution time limit = PT1H
+        [[[directives]]]
+                -A = myaccount
+                -q = regular
+                -N = b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003.st_archive
+                -r = n
+                -j = oe
+                -S = /bin/bash
+                -l = select=1:mpiprocs=1:ompthreads=1
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ice_averages|length) %}
+        [[ice_averages_{{dates_ice_averages[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; ./pp_config --set ICEDIAG_BEGYR_DIFF={{ICEDIAG_BEGYR_DIFF[i]}}; ./pp_config --set ICEDIAG_ENDYR_DIFF={{ICEDIAG_ENDYR_DIFF[i]}}; ./pp_config --set ICEDIAG_BEGYR_CONT={{ICEDIAG_BEGYR_CONT[i]}}; ./pp_config --set ICEDIAG_ENDYR_CONT={{ICEDIAG_ENDYR_CONT[i]}}; ./pp_config --set ICEDIAG_YRS_TO_AVG={{ICEDIAG_YRS_TO_AVG[i]}};  DAMIP/b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/ice_averages
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = averages
+                -q = regular
+                -l = select=4:ncpus=4:mpiprocs=4
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ice_diagnostics|length) %}
+        [[ice_diagnostics_{{dates_ice_diagnostics[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/ice_diagnostics
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = diagnostics
+                -q = regular
+                -l = select=1:ncpus=8:mpiprocs=8
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ice_diagnostics|length) %}
+        [[ice_diagnostics_{{dates_ice_diagnostics[i]}}_post ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/copy_html
+        {% endfor %}
+
+
+        {% for i in range(0,dates_lnd_averages|length) %}
+        [[lnd_averages_{{dates_lnd_averages[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; ./pp_config --set LNDDIAG_clim_first_yr_1={{LNDDIAG_clim_first_yr_1[i]}}; ./pp_config --set LNDDIAG_trends_first_yr_1={{LNDDIAG_trends_first_yr_1[i]}}; ./pp_config --set LNDDIAG_clim_num_yrs_1={{LNDDIAG_clim_num_yrs_1[i]}}; ./pp_config --set LNDDIAG_trends_num_yrs_1={{LNDDIAG_trends_num_yrs_1[i]}};  b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/lnd_averages
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = averages
+                -q = regular
+                -l = select=4:ncpus=18:mpiprocs=18
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_lnd_diagnostics|length) %}
+        [[lnd_diagnostics_{{dates_lnd_diagnostics[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/lnd_diagnostics
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = diagnostics
+                -q = regular
+                -l = select=1:ncpus=16:mpiprocs=16
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_lnd_diagnostics|length) %}
+        [[lnd_diagnostics_{{dates_lnd_diagnostics[i]}}_post ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/copy_html
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ocn_averages|length) %}
+        [[ocn_averages_{{dates_ocn_averages[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; ./pp_config --set OCNDIAG_YEAR0={{OCNDIAG_YEAR0[i]}}; ./pp_config --set OCNDIAG_YEAR1={{OCNDIAG_YEAR1[i]}}; ./pp_config --set OCNDIAG_TSERIES_YEAR0={{OCNDIAG_TSERIES_YEAR0[i]}}; ./pp_config --set OCNDIAG_TSERIES_YEAR1={{OCNDIAG_TSERIES_YEAR1[i]}};  b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/ocn_averages
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = averages
+                -q = regular
+                -l = select=4:ncpus=4:mpiprocs=4
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ocn_diagnostics|length) %}
+        [[ocn_diagnostics_{{dates_ocn_diagnostics[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/ocn_diagnostics
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = diagnostics
+                -q = regular
+                -l = select=1:ncpus=16:mpiprocs=16
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_ocn_diagnostics|length) %}
+        [[ocn_diagnostics_{{dates_ocn_diagnostics[i]}}_post ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/copy_html
+        {% endfor %}
+
+
+        {% for i in range(0,dates_timeseriesL|length) %}
+        [[timeseriesL_{{dates_timeseriesL[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/timeseriesL
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = timeseries
+                -q = regular
+                -l = select=16:ncpus=9:mpiprocs=9
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
+        {% for i in range(0,dates_xconform|length) %}
+        [[xconform_{{dates_xconform[i]}} ]]
+        script = cd b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003; b.e21.B1850cmip6.f09_g17.DAMIP-hist-aer.003/postprocess/xconform
+        [[[job]]]
+                method = pbs
+                execution time limit = PT12H
+        [[[directives]]]
+                -N = xconform
+                -q = regular
+                -l = select=16:ncpus=4:mpiprocs=4
+                -A = myaccount
+        [[[event hooks]]]
+                started handler = cylc email-suite
+                succeeded handler = cylc email-suite
+                failed handler = cylc email-suite
+        {% endfor %}
+
+
