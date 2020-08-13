@@ -1,4 +1,7 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3895058.svg)](https://doi.org/10.5281/zenodo.3895058)
+
 The documentation for this project can be found at
+
 https://cesm-wf-documentation.readthedocs.io
 
 
@@ -8,8 +11,10 @@ These scripts are still in development - please contact Sheri Mickelson (mickels
 if you plan to use them in a production run.
 
 The easiest way to get started is to:
+
 Edit the top of create_cylc_newcase 
-./create_cylc_newcase -case <CESM CASE NAME> -compset <COMPSET> -res <RES>
+
+    ./create_cylc_newcase -case <CESM CASE NAME> -compset <COMPSET> -res <RES>
 
 
 Contributor License Agreement
